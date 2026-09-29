@@ -39,6 +39,7 @@ export class Mitti extends EventEmitter {
         this.#changed(m.address);
       }
     });
+    this.osc.on('resend', () => this.send('/mitti/resendOSCFeedback'));
     this.osc.on('online', (on) => { this.log(`Mitti OSC ${on ? 'online' : 'offline'}`); this.#changed('online'); });
     this.osc.on('error', (err) => this.log(`OSC socket: ${err.message}`));
   }
@@ -82,7 +83,7 @@ export class Mitti extends EventEmitter {
       this.deck = null;
       this.playback = emptyPlayback();
       this.#startDeck();
-      this.osc.send('/mitti/resendOSCFeedback');
+      this.send('/mitti/resendOSCFeedback');
     }
     this.#changed('config');
   }
@@ -102,7 +103,12 @@ export class Mitti extends EventEmitter {
 
   /* ------------------------------------------------------------ commands */
 
-  send(address, args) { return this.osc.send(address, args); }
+  send(address, args) {
+    /* A resend re-lists every cue; forget the old list so a cue removed or
+       reordered in Mitti does not linger under its old number. */
+    if (address === '/mitti/resendOSCFeedback') this.playback.cues = {};
+    return this.osc.send(address, args);
+  }
 
   /** One transport action, over OSC or HyperDeck. */
   async act(action, via = 'osc') {

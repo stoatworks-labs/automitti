@@ -1,6 +1,7 @@
 /*
  * Copied from LivePremier Plus (plugins/hyperdeck/link.js, 9703ce3) and
- * changed only to wait for the deck's greeting before calling it connected.
+ * changed to wait for the deck's greeting before calling it connected, and to
+ * end commands with LF (Mitti refuses CRLF).
  *
  * One deck's connection: HyperDeck protocol over TCP 9993, kept up.
  *
@@ -246,7 +247,10 @@ export class DeckLink extends EventEmitter {
     }, REPLY_TIMEOUT_MS);
     next.timer.unref?.();
     this.inFlight = next;
-    this.socket.write(`${next.line}\r\n`);
+    /* LF, not CRLF: Mitti's emulation (2.8.18) answers `103 unsupported` to a
+       command that ends in \r — only `device info` survives it. A real
+       HyperDeck takes either. */
+    this.socket.write(`${next.line}\n`);
   }
 
   failAll(why) {

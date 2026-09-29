@@ -57,7 +57,7 @@ export class MittiOscLink extends EventEmitter {
     this.listenPort = this.sock.address().port;
     this.timer = setInterval(() => this.#tick(), PING_EVERY_MS);
     this.#tick();
-    this.send('/mitti/resendOSCFeedback');
+    this.emit('resend');
   }
 
   stop() {
@@ -88,7 +88,7 @@ export class MittiOscLink extends EventEmitter {
     this.online = Date.now() - this.lastPong < ONLINE_WITHIN_MS;
     if (was !== this.online) {
       this.emit('online', this.online);
-      if (this.online) this.send('/mitti/resendOSCFeedback');
+      if (this.online) this.emit('resend');
     }
   }
 

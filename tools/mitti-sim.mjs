@@ -68,7 +68,7 @@ export async function startMittiSim(options = {}) {
     const c = cue();
     send('/mitti/playhead', [{ type: 'f', value: c ? state.at / c.seconds : 0 }]);
     send('/mitti/cueTimeElapsed', [tc(state.at)]);
-    send('/mitti/cueTimeLeft', [tc(c ? c.seconds - state.at : 0)]);
+    send('/mitti/cueTimeLeft', [`-${tc(c ? c.seconds - state.at : 0)}`]); // negative, as Mitti sends it
     send('/mitti/time', [tc(state.cues.slice(0, state.current).reduce((t, x) => t + x.seconds, 0) + state.at)]);
   }
 
@@ -231,8 +231,12 @@ export async function startMittiSim(options = {}) {
         buffer += text;
         let i;
         while ((i = buffer.indexOf('\n')) >= 0) {
-          const line = buffer.slice(0, i).replace(/\r$/, '').trim();
+          const raw = buffer.slice(0, i);
           buffer = buffer.slice(i + 1);
+          /* As Mitti 2.8.18 does: a command ending in \r is not recognised
+             (device info excepted). */
+          if (raw.endsWith('\r') && !/^device info/i.test(raw)) { socket.write('103 unsupported\r\n'); continue; }
+          const line = raw.trim();
           if (line) socket.write(answer(line, client));
         }
       });
@@ -251,7 +255,7 @@ export async function startMittiSim(options = {}) {
     const rest = restParts.join(':');
     switch (cmd) {
       case 'ping': return '200 ok\r\n';
-      case 'device info': return '204 device info:\r\nprotocol version: 1.11\r\nmodel: Mitti\r\nslot count: 1\r\n\r\n';
+      case 'device info': return '204 device info:\r\nprotocol version:1.11\r\nmodel: Mitti\r\nslot count: 1\r\n\r\n';
       case 'transport info': return transportBlock(208);
       case 'slot info': return '202 slot info:\r\nslot id: 1\r\nstatus: mounted\r\nvideo format: 1080p25\r\n\r\n';
       case 'clips count': return `214 clips count:\r\nclip count: ${state.cues.length}\r\n\r\n`;

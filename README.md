@@ -80,6 +80,10 @@ Between feedback packets the clock runs locally, so it counts smoothly.
 - **Mitti connects to the first IPv4 address Bonjour gives it.** On a machine with ZeroTier
   or Tailscale that is often the VPN. Set *Network → Announce on address* to the show
   network's address.
+- **Mitti's HyperDeck emulation refuses CRLF.** A command ending in `\r\n` gets `103
+  unsupported` (only `device info` gets through), so automitti sends LF. Other HyperDeck
+  clients that send CRLF see nothing but errors from Mitti.
+- **Mitti sends time left as a negative timecode** (`-00:00:45:00`).
 - **ZeroTier owns TCP 9993**, which is the HyperDeck port. On a machine running ZeroTier,
   Mitti's HyperDeck emulation can't start, and the page says the port "answered, but not as a
   HyperDeck". You lose the next clip's TRT until it has once been current; nothing else is
@@ -95,8 +99,11 @@ On 2026-09-29, on the author's Mac:
 
 - **Real Mitti 2.8.18:** OSC ping/pong and feedback; feedback relayed. Mitti **selected and
   connected to the emulated ATEM** by itself (over Bonjour) and reconnected after the server
-  restarted, including from the packaged tray app. automitti joined **Mitti's own NDI
-  output** as a tally receiver.
+  restarted, including from the packaged tray app. **An AUTO on the (simulated) V-160HD onto
+  Mitti's input rolled Mitti through the emulated ATEM** as the transition began. The clip
+  list with durations came over Mitti's HyperDeck emulation, and the display showed the
+  current and next TRTs correctly. automitti joined **Mitti's own NDI output** as a tally
+  receiver.
 - **Blackmagic's Switcher SDK 10.2.1** (the code Mitti's ATEM integration runs): the SDK's
   `DeviceInfo` sample accepts the emulated ATEM. Per-input tally callbacks, `SetPreviewInput`,
   `PerformCut` and `PerformAutoTransition` work end to end through to the switcher behind it
@@ -113,8 +120,9 @@ On 2026-09-29, on the author's Mac:
 - a real V-160HD. It is written from Roland's documents and the Companion module, and its
   uncertain points are listed in [docs/V160HD.md](docs/V160HD.md);
 - a real Pulse 4K for this code. Its paths were read off a live Pulse 4K by LivePremier Plus;
-- Mitti actually *playing* on a take from the emulated ATEM or NDI. It connected, but its
-  playlist was empty during the test;
+- Mitti's own Pause-at-End CUT/AUTO arriving through the emulated ATEM; the SDK path it
+  uses (`PerformCut`/`PerformAutoTransition`) is proven;
+- Mitti playing on NDI tally, as opposed to receiving it;
 - Windows and Linux builds.
 
 ## Layout

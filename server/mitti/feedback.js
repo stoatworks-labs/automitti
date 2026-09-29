@@ -66,7 +66,8 @@ export function applyFeedback(state, { address, args }) {
       case 'playhead': state.playhead = clamp01(Number(v)); return true;
       case 'time': state.time = str(v); return true;
       case 'cueTimeElapsed': noteTc(state, v); state.elapsed = str(v); return true;
-      case 'cueTimeLeft': noteTc(state, v); state.remaining = str(v); return true;
+      /* Mitti sends time left as a NEGATIVE timecode ("-00:00:45:00"). */
+      case 'cueTimeLeft': noteTc(state, v); state.remaining = str(v)?.replace(/^-/, '') ?? null; return true;
       case 'currentCueName': state.current.name = str(v); return true;
       case 'currentCueID': state.current.id = str(v); return true;
       case 'currentCueTRT': noteTc(state, v); state.current.trt = str(v); return true;
