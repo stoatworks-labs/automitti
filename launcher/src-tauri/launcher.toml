@@ -1,0 +1,38 @@
+# automitti desktop app config.
+#
+# automitti is a small Node program with no build step, so the bundle carries a
+# Node runtime and a copy of the repo's server/ and web/ trees plus its three
+# runtime dependencies (ws, bonjour-service, koffi — koffi's native addon only
+# for the target platform). {resource} = the .app resource dir.
+#
+# Only the web port is injected. Everything else — where Mitti is, the
+# switcher, the emulated ATEM, NDI, the OSC destinations — is set on the app's
+# own page and remembered in its data directory, so it can be changed from a
+# browser on another machine mid-show without restarting anything.
+
+[app]
+name = "automitti"
+command = "{resource}/node"
+args = ["{resource}/automitti-app/server/index.js"]
+url = "http://{host}:{port}/"
+default_port = 8710
+# cwd omitted -> runs from the writable app-config dir.
+
+[inject]
+mode = "env"
+
+[inject.env]
+AUTOMITTI_PORT = "{port}"
+AUTOMITTI_HOST = "{host}"
+
+[app.theme]
+bg = "#0e1014"
+panel = "#171a20"
+"panel-2" = "#1d2128"
+border = "#2a2e37"
+text = "#e9ecf2"
+muted = "#8b92a3"
+dim = "#6b717b"
+accent = "#5b8cff"
+"accent-soft" = "#14203a"
+good = "#38d27a"

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mitti clock</title>
+<style>
+  :root {
+    --bg: #07080a; --panel: #111318; --line: #23262e; --text: #eef0f4; --dim: #8a90a0;
+    --play: #38d27a; --pause: #f2b233; --warn: #f2b233; --alert: #ff4d4d; --off: #555b68;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  main { height: 100%; display: grid; grid-template-rows: auto 1fr auto auto; gap: 2vh; padding: 3vh 3vw; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 2vw; font-size: clamp(12px, 1.8vh, 22px); color: var(--dim); }
+  .chip { display: inline-flex; align-items: center; gap: .5em; padding: .3em .8em; border-radius: 999px; border: 1px solid var(--line);
+    font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .chip i { width: .7em; height: .7em; border-radius: 50%; background: var(--off); }
+  .chip.playing { color: var(--play); border-color: color-mix(in srgb, var(--play) 50%, transparent); }
+  .chip.playing i { background: var(--play); box-shadow: 0 0 12px var(--play); }
+  .chip.paused { color: var(--pause); } .chip.paused i { background: var(--pause); }
+  .chip.offline { color: var(--alert); } .chip.offline i { background: var(--alert); }
+  .chip.onair { color: #fff; background: #c21d1d; border-color: #c21d1d; }
+  .chip.onair i { background: #fff; }
+  .chip.preview { color: #0b0; border-color: #0b0; } .chip.preview i { background: #0b0; }
+  .now { display: grid; grid-template-rows: auto auto 1fr auto; min-height: 0; }
+  .label { font-size: clamp(12px, 2vh, 24px); color: var(--dim); letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+  .name { font-size: clamp(22px, 7vh, 110px); font-weight: 800; line-height: 1.05; margin: .2em 0 .1em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .remaining { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 800;
+    font-size: clamp(64px, 30vh, 520px); line-height: .95; align-self: center; letter-spacing: -.02em; transition: color .3s; }
+  .remaining.warn { color: var(--warn); }
+  .remaining.alert { color: var(--alert); }
+  .remaining.alert.playing { animation: pulse 1s steps(2, end) infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .times { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2vw; }
+  .times div { background: var(--panel); border: 1px solid var(--line); border-radius: 1.2vh; padding: 1.4vh 1.6vw; min-width: 0; }
+  .times b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: clamp(20px, 6vh, 90px); font-weight: 700; margin-top: .15em; white-space: nowrap; }
+  .bar { height: 1.6vh; min-height: 8px; background: var(--panel); border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+  .bar span { display: block; height: 100%; width: 0; background: var(--play); transition: background .3s; }
+  .bar.warn span { background: var(--warn); } .bar.alert span { background: var(--alert); }
+  .next { display: flex; align-items: baseline; gap: 2vw; background: var(--panel); border: 1px solid var(--line); border-radius: 1.2vh; padding: 1.6vh 2vw; min-width: 0; }
+  .next .name { font-size: clamp(18px, 5vh, 72px); margin: 0; flex: 1; }
+  .next b { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: clamp(18px, 5vh, 72px); }
+  .muted { color: var(--dim); }
+  @media (max-aspect-ratio: 1/1) {
+    .times { grid-template-columns: 1fr; }
+    .remaining { font-size: clamp(56px, 18vh, 300px); }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span id="title">Mitti</span>
+    <span style="display:flex; gap:1vw">
+      <span class="chip" id="tally" hidden><i></i><span></span></span>
+      <span class="chip" id="state"><i></i><span>connecting</span></span>
+    </span>
+  </header>
+  <section class="now">
+    <div class="label">Now</div>
+    <div class="name" id="curName">—</div>
+    <div class="remaining" id="remaining">--:--</div>
+    <div class="times">
+      <div><span class="label">Elapsed</span><b id="elapsed">--:--</b></div>
+      <div><span class="label">Remaining</span><b id="remainingSmall">--:--</b></div>
+      <div><span class="label">TRT</span><b id="trt">--:--</b></div>
+    </div>
+  </section>
+  <div class="bar" id="bar"><span></span></div>
+  <section class="next">
+    <span class="label">Next</span>
+    <span class="name" id="nextName">—</span>
+    <span class="label">TRT</span>
+    <b id="nextTrt">--:--</b>
+  </section>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+const $ = (id) => document.getElementById(id);
+let status = null;
+let receivedAt = 0;
+let showFrames = params.has('frames');
+
+function fmt(sec, { frames = false, fps = 25, sign = false } = {}) {
+  if (sec == null || !Number.isFinite(sec)) return '--:--';
+  const neg = sec < 0;
+  let s = Math.abs(sec);
+  const whole = frames ? Math.floor(s) : Math.ceil(s - 0.0005);
+  const f = Math.floor((s - Math.floor(s)) * fps);
+  const h = Math.floor(whole / 3600), m = Math.floor(whole / 60) % 60, ss = whole % 60;
+  const p = (n) => String(n).padStart(2, '0');
+  let out = h ? `${h}:${p(m)}:${p(ss)}` : `${p(m)}:${p(ss)}`;
+  if (frames) out += `:${p(f)}`;
+  return (neg || sign) ? `${neg ? '-' : '+'}${out}` : out;
+}
+function connect() {
+  const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'status') { status = msg.status; receivedAt = performance.now(); }
+  };
+  ws.onclose = () => { status = null; setTimeout(connect, 1000); };
+}
+connect();
+
+function frame() {
+  requestAnimationFrame(frame);
+  const st = $('state');
+  if (!status) { st.className = 'chip offline'; st.lastChild.textContent = 'no server'; return; }
+  const m = status.mitti;
+  const d = status.config.display;
+  const frames = showFrames || d.showFrames;
+  $('title').textContent = d.title || 'Mitti';
+  document.title = d.title || 'Mitti clock';
+
+  /* Between feedback packets, run the clock locally while playing. */
+  /* Seconds since Mitti last reported, on the server's clock then ours; capped
+     so a stalled feed does not run the clock away. */
+  const since = (performance.now() - receivedAt) / 1000 + (m.updatedAt ? (m.at - m.updatedAt) / 1000 : 0);
+  const run = m.playing && m.online ? Math.min(since, 2) : 0;
+  const trt = m.current.trtSec;
+  let remaining = m.remainingSec != null ? Math.max(0, m.remainingSec - run) : null;
+  let elapsed = m.elapsedSec != null ? m.elapsedSec + run : null;
+  if (trt != null) {
+    if (elapsed != null) elapsed = Math.min(trt, elapsed);
+    if (remaining == null && elapsed != null) remaining = Math.max(0, trt - elapsed);
+  }
+
+  st.className = `chip ${!m.online ? 'offline' : m.playing ? 'playing' : 'paused'}`;
+  st.lastChild.textContent = !m.online ? 'Mitti offline' : m.playing ? 'Playing' : 'Paused';
+
+  const sw = status.switcher;
+  const tally = $('tally');
+  if (sw && sw.status === 'online' && sw.mittiInput != null) {
+    const t = sw.tally?.[sw.mittiInput] || {};
+    tally.hidden = false;
+    tally.className = `chip ${t.program ? 'onair' : t.preview ? 'preview' : ''}`;
+    tally.lastChild.textContent = t.program ? 'On air' : t.preview ? 'Preview' : 'Off air';
+  } else tally.hidden = true;
+
+  $('curName').textContent = m.current.name || '—';
+  $('nextName').textContent = m.next.name || '—';
+  const big = $('remaining');
+  big.textContent = fmt(remaining, { frames, fps: m.fps });
+  $('remainingSmall').textContent = fmt(remaining, { frames, fps: m.fps });
+  $('elapsed').textContent = elapsed == null ? '--:--' : fmt(Math.max(0, elapsed - (frames ? 0 : 0.999)), { frames, fps: m.fps });
+  $('trt').textContent = fmt(trt, { frames, fps: m.fps });
+  $('nextTrt').textContent = fmt(m.next.trtSec, { frames, fps: m.fps });
+
+  const level = remaining == null ? '' : remaining <= d.alertAt ? 'alert' : remaining <= d.warnAt ? 'warn' : '';
+  big.className = `remaining ${level} ${m.playing ? 'playing' : ''}`;
+  const bar = $('bar');
+  bar.className = `bar ${level}`;
+  const frac = trt ? Math.min(1, Math.max(0, (elapsed ?? 0) / trt)) : (m.playhead || 0);
+  bar.firstElementChild.style.width = `${(frac * 100).toFixed(2)}%`;
+}
+frame();
+</script>
+</body>
+</html>

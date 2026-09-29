@@ -1,0 +1,50 @@
+[package]
+name = "av-launcher"
+version = "0.1.0"
+description = "Tray launcher for automitti"
+authors = ["Allan Sargeant"]
+edition = "2021"
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "av_launcher_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+diag = { path = "crates/diag" }
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+# The failure a start or a dying server produces is logged as well as shown,
+# so it is in the diagnostics bundle after the panel has moved on.
+tracing = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Network interface enumeration for the GUI Interface picker.
+if-addrs = "0.15"
+# Parse our own launcher.toml (serde).
+toml = "1.1"
+# Comment-preserving TOML editing so we can patch an app's config file
+# (e.g. srt-router's `[web] bind`) without destroying its formatting.
+toml_edit = "0.25"
+# The in-process static server behind `[serve] mode = "static"`. Synchronous
+# and small: an async stack would be more surface than serving a few hundred
+# kilobytes of built site on a LAN needs. Same crate Burrow serves its demos with.
+tiny_http = "0.12"
+
+# kill(2) for SIGTERM on Stop/Quit — std's Child::kill() is SIGKILL, which
+# gives a server no chance to shut down or stop its own children.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+# The command layer (start/stop/status) is exercised against Tauri's mock
+# runtime — the `commands` tests in lib.rs — which is what this feature adds.
+tauri = { version = "2", features = ["test"] }
+
+# Standalone: keep this out of any parent app cargo workspace.
+[workspace]

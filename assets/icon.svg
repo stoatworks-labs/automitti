@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232833"/><stop offset="1" stop-color="#0d0f13"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <!-- the clip: a play triangle -->
+  <path d="M330 300 L330 724 L690 512 Z" fill="#eef0f4"/>
+  <!-- the switcher's say-so: a program tally lamp -->
+  <circle cx="742" cy="282" r="86" fill="#e23b3b"/>
+  <circle cx="742" cy="282" r="86" fill="none" stroke="#0d0f13" stroke-width="22"/>
+  <!-- the progress of the clip -->
+  <rect x="200" y="808" width="624" height="34" rx="17" fill="#2e3440"/>
+  <rect x="200" y="808" width="400" height="34" rx="17" fill="#38d27a"/>
+</svg>
