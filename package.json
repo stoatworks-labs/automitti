@@ -1,9 +1,11 @@
 {
   "name": "automitti",
   "version": "0.1.0",
+  "stage": "preview",
   "private": true,
   "type": "module",
   "description": "Puts Mitti on any switcher: an emulated ATEM, NDI tally, HyperDeck and OSC rules, OSC feedback to many destinations, and a clip-time display page.",
+  "license": "MIT",
   "bin": {
     "automitti": "server/index.js"
   },

@@ -239,7 +239,7 @@ document.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => post('/ap
 function render() {
   if (!status) return;
   const { mitti: m, switcher: s, atem: a, ndi: n, rules: r, config: c } = status;
-  $('version').textContent = `v${status.version}`;
+  $('version').textContent = `v${status.version}${status.stage ? ` (${status.stage})` : ''}`;
   dot($('mDot'), m.error ? 'bad' : m.online ? 'ok' : 'bad');
   $('mNow').textContent = m.current.name || (m.online ? '—' : 'not answering');
   $('mEl').textContent = fmt(m.elapsedSec); $('mTrt').textContent = fmt(m.current.trtSec); $('mLeft').textContent = fmt(m.remainingSec);

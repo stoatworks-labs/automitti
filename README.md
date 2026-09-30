@@ -1,8 +1,12 @@
-# automitti
+# automitti (preview)
 
-> **AI-assisted project.** Built with [Claude Code](https://claude.com/claude-code)
-> (Anthropic), directed and reviewed by a human author. See
+> **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
+> (Anthropic), directed and reviewed by a human author. It has run against a real Mitti
+> 2.8.18 and Blackmagic's own Switcher SDK, but the switchers only against simulators — see
 > [What has been verified](#what-has-been-verified) before relying on it for a show.
+>
+> **Preview.** v0.1.0 is a preview release: complete enough to try, not yet proven on a real
+> V-160HD or Pulse 4K.
 
 A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti doesn't
 know about, such as a **Roland V-160HD** or an **Analog Way Pulse 4K / Midra 4K**. They
@@ -22,6 +26,9 @@ drive Mitti the way an ATEM does. automitti also:
  any browser ◀── /display (clip clock), / (control + settings)
                         └────────────────────────────────────────────┘
 ```
+
+Not affiliated with or endorsed by imimot (Mitti), Roland, Analog Way, Blackmagic Design or
+Vizrt (NDI). Their names are used only to say what this works with.
 
 ## Four ways to put Mitti on the switcher
 

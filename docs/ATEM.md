@@ -5,6 +5,11 @@ Research date: 2026-09-29. Installed stack on this Mac: **ATEM Switchers 10.2.1*
 `/Library/Application Support/Blackmagic Design/Switchers/BMDSwitcherAPI.bundle` (Jan 2026 build),
 **Mitti 2.8.18** (build 1441).
 
+> The research artefacts this report cites under `atem-research/` (the prototype server, the SDK
+> test clients, the disassembly listings and the cloned reference projects) were working files
+> and are not part of this repository. `tools/sdk/tallytest.cpp` and `tools/sdk-check.sh` are the
+> parts that were kept.
+
 Labels used below:
 
 - **VERIFIED**: tested here against the installed SDK with a prototype server
@@ -474,7 +479,7 @@ Test command:
 In Node, use `bonjour-service` or `@homebridge/ciao` with the same TXT.
 
 I could not capture a real ATEM's TXT record: no ATEM answered mDNS on the LAN today, and
-192.168.12.68 was unreachable. The complete real key set and the exact value formats are
+the bench switcher was unreachable. The complete real key set and the exact value formats are
 **UNCERTAIN**. The keys above are the ones consumers are proven to read.
 
 ---

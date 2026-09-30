@@ -25,7 +25,10 @@ import { Advertiser } from './bonjour.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(here, '..', 'web');
-const VERSION = JSON.parse(fs.readFileSync(path.resolve(here, '..', 'package.json'), 'utf8')).version;
+const PKG = JSON.parse(fs.readFileSync(path.resolve(here, '..', 'package.json'), 'utf8'));
+const VERSION = PKG.version;
+/* "preview" while the switcher drivers have not met real hardware; shown beside the version everywhere. */
+const STAGE = PKG.stage || '';
 
 const logLines = [];
 function log(msg) {
@@ -57,6 +60,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 function status() {
   return {
     version: VERSION,
+    stage: STAGE,
     config: config(),
     mitti: mitti.snapshot(),
     switcher: switcher.snapshot(),
@@ -180,7 +184,7 @@ async function main() {
     server.once('error', reject);
     server.listen(port, argHost || config().httpBind, resolve);
   });
-  log(`automitti ${VERSION} on http://localhost:${port}/ (display: /display), Mitti feedback on UDP ${mitti.osc.listenPort}`);
+  log(`automitti ${VERSION}${STAGE ? ` (${STAGE})` : ''} on http://localhost:${port}/ (display: /display), Mitti feedback on UDP ${mitti.osc.listenPort}`);
 }
 
 function shutdown() {

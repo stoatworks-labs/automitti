@@ -6,7 +6,7 @@ Info.plist, `com.imimot.Mitti.2` prefs, logs), and the installed Companion modul
 `imimot-mitti-3.10.0` (the reference OSC client and feedback parser).
 
 **Mitti was not launched and nothing was sent to it.** The local prefs have OSC on, with feedback
-going to `172.20.7.37:51001` on the show network (that's Companion). Starting it would announce
+going to `192.0.2.37:51001` on the show network (that's Companion). Starting it would announce
 HyperDeck/OSC on that network.
 
 ---
@@ -120,7 +120,7 @@ Commands handled: `play` (with speed, loop and single clip), `stop`, `goto` (cli
 
 ## 4. Constraints that shape the app design
 
-1. **One OSC feedback target.** Companion is already on it (172.20.7.37:51001). The app has to
+1. **One OSC feedback target.** Companion is already on it (192.0.2.37:51001). The app has to
    take the feedback itself and **re-emit it to Companion**, or Companion must be moved behind
    the app. Mitti's "Feedback To" dropdown lists Bonjour `_osc._udp` services. Companion
    advertises `Companion-Mitti-Module:<port>`, so the app should advertise itself the same way.
