@@ -5,7 +5,7 @@
 > 2.8.18 and Blackmagic's own Switcher SDK, but the switchers only against simulators — see
 > [What has been verified](#what-has-been-verified) before relying on it for a show.
 >
-> **Preview.** v0.1.0 is a preview release: complete enough to try, not yet proven on a real
+> **Preview.** v0.1.1 is a preview release: complete enough to try, not yet proven on a real
 > V-160HD or Pulse 4K.
 
 A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti doesn't
