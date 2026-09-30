@@ -13,6 +13,7 @@
  */
 
 import dgram from 'node:dgram';
+import os from 'node:os';
 import { lookup } from 'node:dns/promises';
 import { EventEmitter } from 'node:events';
 import { decode, encode } from '../../../server/lib/osc.js';
@@ -140,4 +141,12 @@ const sameHost = (a, b) => {
   const x = norm(a); const y = norm(b);
   return x === y || (isSelf(x) && isSelf(y));
 };
-const isSelf = (h) => ['127.0.0.1', 'localhost', '::1'].includes(norm(h));
+/* This machine, by any of its names: loopback or one of its own interface
+   addresses. Mitti on the same Mac, told to send feedback to the LAN address it
+   picked from its Bonjour list, sends FROM that address — not from 127.0.0.1 —
+   and matching by string alone dropped every packet as a stranger's. */
+const isSelf = (h) => {
+  const x = norm(h);
+  if (['127.0.0.1', 'localhost', '::1'].includes(x)) return true;
+  return Object.values(os.networkInterfaces()).flat().some((a) => a && norm(a.address) === x);
+};

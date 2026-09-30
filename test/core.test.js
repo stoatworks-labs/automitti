@@ -116,3 +116,46 @@ test('a v0.1.0 settings file carries across to per-driver settings', () => {
   /* Normalising the result again changes nothing. */
   assert.deepEqual(normalise(c), c);
 });
+
+test('the emulated ATEM id is created once and kept, whatever the host is called', async () => {
+  const { ConfigStore, legacyAtemId } = await import('../server/config.js');
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'automitti-cfg-'));
+  try {
+    /* A v0.1.0 file has no id: it gets the one v0.1.0 announced here, so Mitti's pairing survives. */
+    fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({ atem: { enabled: true, name: 'automitti' } }));
+    const a = new ConfigStore(dir);
+    assert.equal(a.get().atem.uniqueId, legacyAtemId('automitti'));
+    assert.match(JSON.parse(fs.readFileSync(path.join(dir, 'config.json'), 'utf8')).atem.uniqueId, /^[0-9a-f]{32}$/, 'written to disk at once');
+    /* Stored, so a later rename of the machine changes nothing. */
+    const kept = a.get().atem.uniqueId;
+    fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify({ ...a.get(), atem: { ...a.get().atem, uniqueId: 'ab'.repeat(16) } }));
+    assert.equal(new ConfigStore(dir).get().atem.uniqueId, 'ab'.repeat(16));
+    /* A save that leaves the id out does not reset it. */
+    const b = new ConfigStore(dir);
+    const next = structuredClone(b.get()); delete next.atem.uniqueId;
+    assert.equal(b.set(next).atem.uniqueId, 'ab'.repeat(16));
+    assert.notEqual(kept, '');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('feedback from this machine by its LAN address counts as Mitti on 127.0.0.1', async () => {
+  const osMod = await import('node:os');
+  const lan = Object.values(osMod.networkInterfaces()).flat().find((a) => a && a.family === 'IPv4' && !a.internal)?.address;
+  if (!lan) return; // no LAN interface on this runner
+  const link = new MittiOscLink({ target: () => ({ host: '127.0.0.1', port: 9 }), listenPort: 0, destinations: () => [] });
+  const seen = [];
+  link.on('message', (m) => seen.push(m.address));
+  await link.start();
+  const sock = dgram.createSocket('udp4');
+  await new Promise((r) => sock.bind(0, lan, r));
+  sock.send(encode('/mitti/currentCueName', ['From the LAN address']), link.listenPort, lan);
+  await sleep(150);
+  sock.close();
+  link.stop();
+  assert.deepEqual(seen, ['/mitti/currentCueName']);
+});

@@ -9,9 +9,8 @@
  */
 
 import { EventEmitter } from 'node:events';
-import crypto from 'node:crypto';
-import os from 'node:os';
 import { AtemServer } from './server.js';
+import { legacyAtemId } from '../config.js';
 
 export class AtemBridge extends EventEmitter {
   constructor({ config, switcher, log = () => {} }) {
@@ -94,9 +93,9 @@ export class AtemBridge extends EventEmitter {
     }
   }
 
-  /** Stable per machine and name, so Mitti remembers the same "device". */
+  /** Stored in the settings (config.js), so Mitti recognises the same "device" for good. */
   uniqueId() {
-    return crypto.createHash('md5').update(`${os.hostname()}|${this.config().atem.name}`).digest('hex');
+    return this.config().atem.uniqueId || legacyAtemId(this.config().atem.name);
   }
 
   bonjourServices() {

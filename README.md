@@ -135,7 +135,18 @@ network, so only install ones you trust.
 
 - **Mitti connects to the first IPv4 address Bonjour gives it.** On a machine with ZeroTier
   or Tailscale that is often the VPN. Set *Network → Announce on address* to the show
-  network's address.
+  network's address. If that address disappears (the Mac moves network), automitti falls back
+  to announcing on every interface and says so, and re-announces whenever the Mac's addresses
+  change.
+- **Mitti saves the feedback target it picks from its Bonjour list as a bare IP address.**
+  Choose *automitti-51010* in Mitti's *Feedback To* list and move the Mac to another network, and
+  Mitti goes on sending feedback to the old address, so automitti shows it offline. When Mitti
+  and automitti are on the same Mac, set *Feedback To* to Custom, `127.0.0.1`, port `51010`;
+  otherwise pick the entry again after a network change.
+- **The emulated ATEM keeps one identity.** Mitti remembers an ATEM by its unique id, which
+  automitti now stores in its settings (`atem.uniqueId`). In v0.1.0 it came from the Mac's host
+  name, so a Mac renamed by a network change looked like a new ATEM to Mitti and had to be chosen
+  again.
 - **Mitti's HyperDeck emulation refuses CRLF.** A command ending in `\r\n` gets `103
   unsupported` (only `device info` gets through), so automitti sends LF. Other HyperDeck
   clients that send CRLF see nothing but errors from Mitti.
@@ -167,7 +178,12 @@ On 2026-09-29, on the author's Mac:
 - **NDI tally** from switcher takes, read back by an NDI SDK sender via `NDIlib_send_get_tally`,
   the same call Mitti uses.
 - **Midra 4K simulator 3.2.29:** tally through AUTO (on air as the take starts), CUT, and
-  preview select.
+  preview select, and the driver's contract test (`AUTOMITTI_MIDRA_SIM`).
+- **Real Mitti 2.8.19 on the Midra 4K simulator (2026-09-30):** Mitti connected to the emulated
+  ATEM, an AUTO on the Midra onto Mitti's input rolled the clip half a second in, mid-transition,
+  and at the end of the clip Mitti's own *Pause at End → AUTO to Preview* came back through the
+  emulated ATEM as "preview 1, AUTO", and the Midra took input 1 back to program. The whole
+  loop, with no rules of automitti's involved.
 - **Test suite** (`npm test`): the OSC codec and relay, the V-160HD driver against its
   simulator (login, labels, pushed tally, CUT/AUTO, pre-3.3 firmware, wrong password), the
   rules end to end with both simulators, and the ATEM emulator against `atem-connection`.
@@ -176,8 +192,6 @@ On 2026-09-29, on the author's Mac:
 - a real V-160HD. It is written from Roland's documents and the Companion module, and its
   uncertain points are listed in [docs/V160HD.md](docs/V160HD.md);
 - a real Pulse 4K for this code. Its paths were read off a live Pulse 4K by LivePremier Plus;
-- Mitti's own Pause-at-End CUT/AUTO arriving through the emulated ATEM; the SDK path it
-  uses (`PerformCut`/`PerformAutoTransition`) is proven;
 - Mitti playing on NDI tally, as opposed to receiving it;
 - Windows and Linux builds.
 

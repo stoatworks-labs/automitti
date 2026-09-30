@@ -280,7 +280,7 @@ function fillAddresses() {
   const want = status.config.advertiseAddress;
   const list = status.addresses || [];
   sel.innerHTML = '<option value="">Every interface</option>' + list.map((a) => `<option value="${esc(a.address)}">${esc(a.address)} (${esc(a.name)})</option>`).join('')
-    + (want && !list.some((a) => a.address === want) ? `<option value="${esc(want)}">${esc(want)} (not present)</option>` : '');
+    + (want && !list.some((a) => a.address === want) ? `<option value="${esc(want)}">${esc(want)} (not on this machine — announcing on every interface)</option>` : '');
 }
 
 /* ---- driver settings, drawn from each driver's own schema ---- */

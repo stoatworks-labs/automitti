@@ -76,6 +76,7 @@ function status() {
       .filter((a) => a.family === 'IPv4' && !a.internal).map((a) => ({ name, address: a.address }))),
     ndi: ndi.snapshot(),
     rules: rules.snapshot(),
+    announcing,
   };
 }
 
@@ -171,14 +172,41 @@ async function applyConfig(prev, next) {
   schedule();
 }
 
+const localIPv4 = () => Object.values(os.networkInterfaces()).flat()
+  .filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address);
+
+/* What is being announced: the pinned address while it exists on this machine,
+   every interface otherwise. A Mac that changes network loses its old address,
+   and announcing a dead one sends the player nowhere. */
+let announcing = { pinned: '', address: '', fallback: false };
+
 function advertise() {
   const c = config();
-  const address = c.advertiseAddress || undefined;
+  const here = localIPv4();
+  const fallback = !!c.advertiseAddress && !here.includes(c.advertiseAddress);
+  if (fallback && !announcing.fallback) log(`${c.advertiseAddress} is not on this machine any more — announcing on every interface until it is`);
+  if (!fallback && announcing.fallback && c.advertiseAddress) log(`${c.advertiseAddress} is back — announcing on it alone`);
+  const address = c.advertiseAddress && !fallback ? c.advertiseAddress : undefined;
+  announcing = { pinned: c.advertiseAddress, address: address || '', fallback };
   bonjour.set([
     ...player.bonjour().map((spec) => ({ ...spec, key: `player-${spec.key}` })),
     ...(c.atem.enabled && c.atem.advertise ? atem.bonjourServices() : []),
   ].map((spec) => ({ ...spec, address })));
 }
+
+/* Re-announce when the machine's addresses change (a network move, a VPN
+   coming up): Bonjour records carry addresses, and a stale one strands the player. */
+let lastAddresses = '';
+setInterval(() => {
+  const now = localIPv4().sort().join(',');
+  if (lastAddresses && now !== lastAddresses) {
+    log(`network addresses changed (${now || 'none'}) — re-announcing`);
+    bonjour.stop();
+    advertise();
+    schedule();
+  }
+  lastAddresses = now;
+}, 10000).unref();
 
 async function main() {
   const port = argPort || config().httpPort;

@@ -4,6 +4,7 @@
  * does not expect.
  */
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -106,6 +107,11 @@ export function normalise(raw = {}) {
       name: str(atem.name) || 'automitti',
       port: int(atem.port, 1, 65535, 9910),
       advertise: bool(atem.advertise, true),
+      /* The emulated ATEM's identity (Bonjour `unique id`), which is how Mitti
+         recognises the same switcher next time. Stored rather than derived:
+         v0.1.0 hashed the host name, and a Mac renamed by a network change
+         became a different ATEM to Mitti. ConfigStore fills it in once. */
+      uniqueId: /^[0-9a-f]{32}$/.test(str(atem.uniqueId)) ? str(atem.uniqueId) : '',
     },
     ndi: {
       enabled: bool(ndi.enabled, false),
@@ -130,11 +136,22 @@ export function normalise(raw = {}) {
   };
 }
 
+export function legacyAtemId(name) {
+  return crypto.createHash('md5').update(`${os.hostname()}|${name}`).digest('hex');
+}
+
 export class ConfigStore {
   constructor(dir) {
     this.dir = dir;
     this.file = path.join(dir, 'config.json');
     this.value = normalise(this.#read());
+    if (!this.value.atem.uniqueId) {
+      /* First run, or a v0.1.0 file: take the id v0.1.0 would have announced on
+         this machine today, so a Mitti already paired with it keeps its pairing,
+         and keep it from now on whatever the machine is called. */
+      this.value.atem.uniqueId = legacyAtemId(this.value.atem.name);
+      try { this.set(this.value); } catch { /* read-only data dir: stays in memory */ }
+    }
   }
 
   #read() {
@@ -149,7 +166,10 @@ export class ConfigStore {
 
   /** Replace (after normalising) and persist atomically. */
   set(next) {
+    const keepId = this.value?.atem?.uniqueId;
     this.value = normalise(next);
+    /* A page that posts a config without the id must not reset it. */
+    if (!this.value.atem.uniqueId && keepId) this.value.atem.uniqueId = keepId;
     fs.mkdirSync(this.dir, { recursive: true });
     const tmp = `${this.file}.tmp`;
     fs.writeFileSync(tmp, `${JSON.stringify(this.value, null, 2)}\n`);
