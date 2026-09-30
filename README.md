@@ -35,6 +35,27 @@ under 30 s and red under 10 s, and the ON AIR chip is the switcher's tally for M
 Not affiliated with or endorsed by imimot (Mitti), Roland, Analog Way, Blackmagic Design or
 Vizrt (NDI). Their names are used only to say what this works with.
 
+<!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/automitti/releases/tag/v0.1.0)** — prebuilt for macOS. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`automitti-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/automitti/releases/download/v0.1.0/automitti-0.1.0-macos-universal.dmg) | 83 MB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/automitti/releases](https://github.com/stoatworks-labs/automitti/releases).
+
+macOS builds are signed and notarised by Apple, so they open normally — no Gatekeeper warning and no quarantine step.
+
+<!-- downloads:end -->
+
 ## Four ways to put Mitti on the switcher
 
 Pick **one** per show. They are alternatives, and running two at once makes both act on
