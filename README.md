@@ -39,14 +39,14 @@ Vizrt (NDI). Their names are used only to say what this works with.
 
 ## Download
 
-**[v0.1.0](https://github.com/stoatworks-labs/automitti/releases/tag/v0.1.0)** — prebuilt for macOS. Pick your platform:
+**[v0.1.1](https://github.com/stoatworks-labs/automitti/releases/tag/v0.1.1)** — prebuilt for macOS. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`automitti-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/automitti/releases/download/v0.1.0/automitti-0.1.0-macos-universal.dmg) | 83 MB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`automitti-0.1.1-macos-universal.dmg`](https://github.com/stoatworks-labs/automitti/releases/download/v0.1.1/automitti-0.1.1-macos-universal.dmg) | 83 MB |
 
 </details>
 
