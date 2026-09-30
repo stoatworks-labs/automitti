@@ -15,7 +15,7 @@
 import dgram from 'node:dgram';
 import { lookup } from 'node:dns/promises';
 import { EventEmitter } from 'node:events';
-import { decode, encode } from './osc.js';
+import { decode, encode } from '../../../server/lib/osc.js';
 
 export const MITTI_OSC_PORT = 51000;
 const PING_EVERY_MS = 2000;

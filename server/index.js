@@ -4,9 +4,11 @@
  *
  *   node server/index.js [--data <dir>] [--port <http port>]
  *
- * One process holds every link: Mitti (OSC + HyperDeck), the switcher driver,
- * the emulated ATEM, NDI tally, the rules, and the web pages. Settings live in
- * <data>/config.json and are edited from the page at /.
+ * One process holds every link: the media player (a player driver — Mitti
+ * built in), the switcher (a switcher driver), the emulated ATEM, NDI tally,
+ * the rules, and the web pages. Settings live in <data>/config.json and are
+ * edited from the page at /. Drivers are found in <app>/drivers and
+ * <data>/drivers — docs/DRIVERS.md.
  */
 
 import http from 'node:http';
@@ -16,8 +18,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { ConfigStore, dataDir } from './config.js';
-import { Mitti } from './mitti/index.js';
-import { Switcher } from './switchers/index.js';
+import { Registry, BUILTIN } from './core/registry.js';
+import { Player } from './core/player.js';
+import { Switcher } from './core/switcher.js';
 import { AtemBridge } from './atem/bridge.js';
 import { NdiTally } from './ndi/tally.js';
 import { Rules } from './rules.js';
@@ -39,18 +42,21 @@ function log(msg) {
   broadcast({ type: 'log', line });
 }
 
-const store = new ConfigStore(dataDir());
+const DATA = dataDir();
+const store = new ConfigStore(DATA);
+/* Built-in drivers, then the user's, which may add or replace. */
+const registry = await Registry.load([BUILTIN, path.join(DATA, 'drivers')], { log: (m) => console.log(m) });
 /* The tray app injects AUTOMITTI_PORT/HOST; a command line may say --port. Either beats the settings file. */
 const argPort = process.argv.includes('--port') ? Number(process.argv[process.argv.indexOf('--port') + 1])
   : (Number(process.env.AUTOMITTI_PORT) || null);
 const argHost = process.env.AUTOMITTI_HOST || null;
 const config = () => store.get();
 
-const mitti = new Mitti({ config, log });
-const switcher = new Switcher({ config, log });
+const player = new Player({ config, registry, log });
+const switcher = new Switcher({ config, registry, log });
 const atem = new AtemBridge({ config, switcher, log });
 const ndi = new NdiTally({ config, switcher, log });
-const rules = new Rules({ config, switcher, mitti, log });
+const rules = new Rules({ config, switcher, player, log });
 const bonjour = new Advertiser({ log });
 
 /* ------------------------------------------------------------ web */
@@ -62,7 +68,8 @@ function status() {
     version: VERSION,
     stage: STAGE,
     config: config(),
-    mitti: mitti.snapshot(),
+    drivers: registry.list(),
+    player: player.snapshot(),
     switcher: switcher.snapshot(),
     atem: atem.snapshot(),
     addresses: Object.entries(os.networkInterfaces()).flatMap(([name, list]) => (list || [])
@@ -83,10 +90,11 @@ const server = http.createServer(async (req, res) => {
       await applyConfig(prev, next);
       return json(res, next);
     }
-    if (url.pathname === '/api/mitti' && req.method === 'POST') {
-      const { action, address, args } = await body(req);
-      if (address) mitti.send(String(address), Array.isArray(args) ? args : []);
-      else await mitti.act(String(action));
+    /* /api/mitti is the v0.1.0 spelling, kept so Companion buttons made for it still work. */
+    if ((url.pathname === '/api/player' || url.pathname === '/api/mitti') && req.method === 'POST') {
+      const { action, address, args, via } = await body(req);
+      if (address) player.command(String(address), Array.isArray(args) ? args : []);
+      else await player.act(String(action), via);
       return json(res, { ok: true });
     }
     if (url.pathname === '/api/switcher' && req.method === 'POST') {
@@ -144,7 +152,7 @@ function schedule() {
   if (pending) return;
   pending = setTimeout(() => { pending = null; broadcast({ type: 'status', status: status() }); }, 50);
 }
-mitti.on('change', schedule);
+player.on('change', schedule);
 switcher.on('change', schedule);
 atem.on('change', schedule);
 ndi.on('change', schedule);
@@ -154,7 +162,7 @@ setInterval(schedule, 1000);
 /* ------------------------------------------------------------ lifecycle */
 
 async function applyConfig(prev, next) {
-  await mitti.reconfigure(prev);
+  await player.reconfigure(prev);
   await switcher.reconfigure(prev);
   await atem.reconfigure(prev);
   await ndi.reconfigure(prev);
@@ -167,14 +175,14 @@ function advertise() {
   const c = config();
   const address = c.advertiseAddress || undefined;
   bonjour.set([
-    c.mitti.advertise && { key: 'osc', name: `automitti-${c.mitti.feedbackPort}`, type: 'osc', protocol: 'udp', port: c.mitti.feedbackPort },
+    ...player.bonjour().map((spec) => ({ ...spec, key: `player-${spec.key}` })),
     ...(c.atem.enabled && c.atem.advertise ? atem.bonjourServices() : []),
-  ].filter(Boolean).map((spec) => ({ ...spec, address })));
+  ].map((spec) => ({ ...spec, address })));
 }
 
 async function main() {
   const port = argPort || config().httpPort;
-  await mitti.start();
+  await player.start();
   await switcher.start();
   await atem.start();
   await ndi.start();
@@ -184,13 +192,14 @@ async function main() {
     server.once('error', reject);
     server.listen(port, argHost || config().httpBind, resolve);
   });
-  log(`automitti ${VERSION}${STAGE ? ` (${STAGE})` : ''} on http://localhost:${port}/ (display: /display), Mitti feedback on UDP ${mitti.osc.listenPort}`);
+  log(`automitti ${VERSION}${STAGE ? ` (${STAGE})` : ''} on http://localhost:${port}/ (display: /display) — player ${player.snapshot().label}, switcher ${switcher.snapshot().label}`);
+  for (const p of registry.problems) log(`driver not loaded: ${p.path}: ${p.problems.join('; ')}`);
 }
 
 function shutdown() {
   log('stopping');
   bonjour.stop();
-  mitti.stop();
+  player.stop();
   switcher.stop();
   atem.stop();
   ndi.stop();

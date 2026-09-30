@@ -11,8 +11,9 @@
   },
   "scripts": {
     "start": "node server/index.js",
-    "sim": "node tools/mitti-sim.mjs",
-    "test": "node --test --test-force-exit --test-timeout=20000 test/*.test.js"
+    "sim": "node drivers/players/mitti/sim.mjs",
+    "test": "node --test --test-force-exit --test-timeout=20000 test/*.test.js",
+    "sim:v160hd": "node drivers/switchers/v160hd/sim.mjs"
   },
   "engines": {
     "node": ">=20"

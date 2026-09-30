@@ -110,9 +110,28 @@ Between feedback packets the clock runs locally, so it counts smoothly.
   Settings are stored in `~/Library/Application Support/automitti/config.json`.
 - **From a checkout:** `npm install && npm start`, then open <http://localhost:8710/>.
 - **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck) and
-  `node tools/v160hd-sim.mjs` is a V-160HD.
+  `npm run sim:v160hd` is a V-160HD.
 
-### Traps worth knowing
+## Adding a switcher or a player
+
+Every switcher, and Mitti itself, is a **driver**: a folder with an `index.js` that describes
+it (name, settings, how to create it) and code that speaks its protocol. The rest of automitti
+(the emulated ATEM, NDI tally, the rules, the clip display, the settings page) only ever talks to
+"the switcher" and "the player", so a new driver gets all of it without any change elsewhere.
+
+- Built-in drivers are in [`drivers/`](drivers/): `switchers/v160hd`, `switchers/midra`,
+  `switchers/manual` and `players/mitti`.
+- Your own go in `drivers/switchers/<id>/` or `drivers/players/<id>/` inside automitti's data
+  folder (`~/Library/Application Support/automitti/` on a Mac). automitti picks them up at start,
+  and one with a built-in's id replaces it.
+- `npm test` holds every driver to the contract, and runs it against its simulator if it has one.
+  `AUTOMITTI_DRIVERS=<folder> npm test` does the same for yours.
+
+[docs/DRIVERS.md](docs/DRIVERS.md) has the contract, a skeleton to copy, and what a QLab (or any
+other player) driver would need. A driver is code that runs with automitti's access to your
+network, so only install ones you trust.
+
+## Traps worth knowing
 
 - **Mitti connects to the first IPv4 address Bonjour gives it.** On a machine with ZeroTier
   or Tailscale that is often the VPN. Set *Network → Announce on address* to the show
@@ -166,13 +185,16 @@ On 2026-09-29, on the author's Mac:
 
 ```
 server/            the Node server the tray app runs
-  mitti/           OSC link + relay, feedback model, HyperDeck (from LivePremier Plus)
-  switchers/       v160hd.js, midra.js, and the shared model
+  core/            the driver contract, the registry, and the switcher and player hosts
+  lib/             protocol code drivers share: OSC, HyperDeck (handed to drivers as `lib`)
   atem/            the ATEM protocol server and its bridge to the switcher
   ndi/             NDI tally via the installed runtime (koffi FFI)
-  rules.js         Mitti's ATEM behaviour, run over OSC/HyperDeck
-web/               control + settings page, clip display
-tools/             mitti-sim, v160hd-sim, sdk-check.sh
+  rules.js         Mitti's ATEM behaviour, run through the player driver
+drivers/
+  switchers/       v160hd, midra, manual: each index.js + driver code (+ sim.mjs)
+  players/mitti/   OSC link and relay, feedback model, HyperDeck clip list, sim.mjs
+web/               control + settings page (driver settings drawn from each schema), clip display
+tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK)
 launcher/          the tray app (the fleet's av-launcher shell, Tauri)
-docs/              MITTI.md, ATEM.md, V160HD.md: the protocol research
+docs/              DRIVERS.md, and MITTI.md, ATEM.md, V160HD.md: the protocol research
 ```

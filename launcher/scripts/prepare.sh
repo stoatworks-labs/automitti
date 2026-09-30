@@ -47,6 +47,9 @@ rm -rf "$APP"
 mkdir -p "$APP"
 cp -R "$REPO/server" "$APP/server"
 cp -R "$REPO/web" "$APP/web"
+# The built-in drivers: every switcher and player, with their simulators (the
+# contract tests use them; they are small and harmless to ship).
+cp -R "$REPO/drivers" "$APP/drivers"
 cp "$REPO/package.json" "$REPO/package-lock.json" "$APP/"
 
 echo "==> installing runtime dependencies"

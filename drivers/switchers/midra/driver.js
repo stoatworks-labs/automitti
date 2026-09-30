@@ -118,15 +118,7 @@ export class MidraDriver extends EventEmitter {
       if (msg && typeof msg.path === 'string') {
         if (this.values.get(msg.path) !== msg.value) touched = true;
         this.values.set(msg.path, msg.value);
-        if (msg.path.endsWith('platformLabel') && !this.online) {
-          this.online = true;
-          this.platform = msg.value;
-          this.emit('status', 'online');
-          this.emit('state', {
-            device: { model: msg.value },
-            inputs: Array.from({ length: INPUTS }, (_, k) => ({ id: k + 1, name: `Input ${k + 1}`, short: `IN${k + 1}` })),
-          });
-        }
+        if (msg.path.endsWith('platformLabel')) this.platform = msg.value;
       }
     }
     if (touched) this.#recompute();
@@ -173,8 +165,32 @@ export class MidraDriver extends EventEmitter {
     this.#get(paths);
   }
 
+  /**
+   * Online only once the first full read is in: the platform, every screen's
+   * enable, and for the screens in scope their transition state and every
+   * fitted layer's source in both buffers. Before that a select would find no
+   * layer to write and a take no screen — and the tally would be a guess.
+   */
+  #ready() {
+    if (!this.platform) return false;
+    for (let s = 1; s <= MAX_SCREENS; s += 1) if (!this.values.has(EN(s))) return false;
+    for (const s of this.screens()) {
+      if (!this.values.has(T(s))) return false;
+      for (const k of this.layers(s)) if (!this.values.has(SRC(s, 'UP', k)) || !this.values.has(SRC(s, 'DOWN', k))) return false;
+    }
+    return true;
+  }
+
   #recompute() {
-    if (!this.online) return;
+    if (!this.online) {
+      if (!this.#ready()) return;
+      this.online = true;
+      this.emit('status', 'online');
+      this.emit('state', {
+        device: { model: this.platform },
+        inputs: Array.from({ length: INPUTS }, (_, k) => ({ id: k + 1, name: `Input ${k + 1}`, short: `IN${k + 1}` })),
+      });
+    }
     const tally = {};
     let program = null;
     let preview = null;
@@ -217,7 +233,8 @@ export class MidraDriver extends EventEmitter {
       const pgm = String(t).endsWith('DOWN') ? 'DOWN' : 'UP';
       const buf = which === 'program' ? pgm : (pgm === 'UP' ? 'DOWN' : 'UP');
       const k = this.layers(s).includes(this.layer) ? this.layer : this.layers(s)[0];
-      if (k) this.#set(SRC(s, buf, k), `INPUT_${Number(id)}`);
+      if (!k) throw new Error(`screen ${s} has no layer to put an input on`);
+      this.#set(SRC(s, buf, k), `INPUT_${Number(id)}`);
     });
     setTimeout(() => this.#slow(), 60);
   }

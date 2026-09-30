@@ -13,10 +13,6 @@ import crypto from 'node:crypto';
 import os from 'node:os';
 import { AtemServer } from './server.js';
 
-/* External inputs per switcher type. Fixed per type, because the input count
-   is topology to an ATEM client and changing it forces a reconnect. */
-const INPUT_COUNT = { v160hd: 52, midra: 16, manual: 20, none: 8 };
-
 export class AtemBridge extends EventEmitter {
   constructor({ config, switcher, log = () => {} }) {
     super();
@@ -25,7 +21,10 @@ export class AtemBridge extends EventEmitter {
     this.log = log;
     this.server = null;
     this.error = null;
-    this.onSwitcher = () => this.#push();
+    /* The input count comes from the switcher driver (its descriptor's
+       inputCount): topology to an ATEM client, so a change drops clients and
+       they resync. */
+    this.onSwitcher = () => { this.server?.setInputCount(this.switcher.inputCount()); this.#push(); };
   }
 
   async start() {
@@ -44,7 +43,7 @@ export class AtemBridge extends EventEmitter {
       this.stop();
       await this.#open();
     }
-    this.server?.setInputCount(INPUT_COUNT[this.config().switcher.type] ?? 8);
+    this.server?.setInputCount(this.switcher.inputCount());
     this.#push();
     this.emit('change');
   }
@@ -54,7 +53,7 @@ export class AtemBridge extends EventEmitter {
     this.error = null;
     if (!c.enabled) { this.emit('change'); return; }
     const server = new AtemServer({
-      port: c.port, name: c.name, inputCount: INPUT_COUNT[this.config().switcher.type] ?? 8, log: this.log,
+      port: c.port, name: c.name, inputCount: this.switcher.inputCount(), log: this.log,
     });
     server.on('command', (cmd) => this.#command(cmd));
     server.on('clients', () => this.emit('change'));

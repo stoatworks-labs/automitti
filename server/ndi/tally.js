@@ -1,7 +1,7 @@
 /*
  * NDI tally for Mitti's NDI trigger.
  *
- * With "NDI" chosen as its integration, Mitti plays when a receiver of its NDI
+ * For a player that follows NDI tally. With "NDI" chosen as its integration, Mitti plays when a receiver of its NDI
  * output reports that output as on program (IMTNDIKit reads
  * NDIlib_send_get_tally). automitti becomes that receiver: it connects to
  * Mitti's NDI source with METADATA-ONLY bandwidth — no video crosses the
@@ -224,7 +224,7 @@ export class NdiTally extends EventEmitter {
 
   #push() {
     if (!this.recv || !lib) return;
-    const id = this.switcher.mittiInput();
+    const id = this.switcher.playerInput();
     const t = id == null ? { program: false, preview: false } : this.switcher.tallyOf(id);
     if (t.program === this.sent.program && t.preview === this.sent.preview) return;
     lib.setTally(this.recv, { on_program: t.program, on_preview: t.preview });

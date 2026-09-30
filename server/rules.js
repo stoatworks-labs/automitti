@@ -1,7 +1,7 @@
 /*
- * Mitti's own ATEM/NDI behaviour, run from automitti's side over OSC or
- * HyperDeck — for when Mitti is driven directly instead of watching an
- * emulated ATEM or its NDI tally:
+ * Mitti's own ATEM/NDI behaviour, run from automitti's side through the player
+ * driver (over OSC or HyperDeck for Mitti) — for when the player is driven
+ * directly instead of watching an emulated ATEM or NDI tally:
  *
  *   on program   play, or nothing
  *   on preview   rewind to the top of the cue, or nothing
@@ -19,11 +19,11 @@
 import { EventEmitter } from 'node:events';
 
 export class Rules extends EventEmitter {
-  constructor({ config, switcher, mitti, log = () => {} }) {
+  constructor({ config, switcher, player, log = () => {} }) {
     super();
     this.config = config;
     this.switcher = switcher;
-    this.mitti = mitti;
+    this.player = player;
     this.log = log;
     this.was = { program: false, preview: false };
     this.endFiredFor = null;
@@ -32,12 +32,16 @@ export class Rules extends EventEmitter {
 
   start() {
     this.switcher.on('tally', () => this.#onTally());
-    this.mitti.on('change', () => this.#onPlayback());
+    this.player.on('change', () => this.#onPlayback());
   }
 
   #enabled() {
     const r = this.config().rules;
-    return r.enabled && this.switcher.mittiInput() != null;
+    return r.enabled && this.switcher.playerInput() != null;
+  }
+
+  #act(action) {
+    this.player.act(action, this.config().rules.via).catch((err) => this.log(`rule: ${action} failed: ${err.message}`));
   }
 
   #did(what) {
@@ -47,7 +51,7 @@ export class Rules extends EventEmitter {
   }
 
   #onTally() {
-    const id = this.switcher.mittiInput();
+    const id = this.switcher.playerInput();
     const now = id == null ? { program: false, preview: false } : this.switcher.tallyOf(id);
     const was = this.was;
     this.was = now;
@@ -56,12 +60,12 @@ export class Rules extends EventEmitter {
     if (now.program && !was.program) {
       this.endFiredFor = null;
       this.sawRunning = false;
-      if (r.onProgram === 'play') { this.mitti.act('play', r.via); this.#did('on program → play'); }
+      if (r.onProgram === 'play') { this.#act('play'); this.#did('on program → play'); }
     } else if (!now.program && was.program) {
       const map = { pause: 'pause', rewind: 'stoprewind', next: 'stopnext' };
-      if (map[r.onLeave]) { this.mitti.act(map[r.onLeave], r.via); this.#did(`taken off → ${r.onLeave}`); }
+      if (map[r.onLeave]) { this.#act(map[r.onLeave]); this.#did(`taken off → ${r.onLeave}`); }
     } else if (now.preview && !was.preview && !now.program) {
-      if (r.onPreview === 'rewind') { this.mitti.act('rewind', r.via); this.#did('on preview → rewind'); }
+      if (r.onPreview === 'rewind') { this.#act('rewind'); this.#did('on preview → rewind'); }
     }
   }
 
@@ -69,7 +73,7 @@ export class Rules extends EventEmitter {
     if (!this.#enabled()) return;
     const r = this.config().rules;
     if (r.onEnd === 'none' || !this.was.program) return;
-    const s = this.mitti.snapshot();
+    const s = this.player.snapshot();
     if (s.playing) this.playingAt = Date.now();
     /* A cue parked on its last frame is not a cue ending — only one that was
        running a moment ago is. */

@@ -4,7 +4,7 @@
  *
  * Written from Roland's Remote Control Guide and the working Companion client;
  * docs/V160HD.md has every command with where it came from. NOT yet run
- * against a real unit: tools/v160hd-sim.mjs is all it has spoken to.
+ * against a real unit: sim.mjs beside it is all it has spoken to.
  *
  * Dialect: the register form, `DTH:aaaaaa,vv;` to write and
  * `RQH:aaaaaa,ssssss;` to read, which every firmware accepts. CUT and AUTO

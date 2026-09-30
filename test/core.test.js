@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import dgram from 'node:dgram';
 import { once } from 'node:events';
-import { decode, encode } from '../server/mitti/osc.js';
-import { applyFeedback, emptyPlayback, tcToSeconds, cueList } from '../server/mitti/feedback.js';
-import { MittiOscLink } from '../server/mitti/oscLink.js';
+import { decode, encode } from '../server/lib/osc.js';
+import { applyFeedback, emptyPlayback, tcToSeconds, cueList } from '../drivers/players/mitti/feedback.js';
+import { MittiOscLink } from '../drivers/players/mitti/osc-link.js';
 import { normalise } from '../server/config.js';
-import { startMittiSim } from '../tools/mitti-sim.mjs';
+import { startMittiSim } from '../drivers/players/mitti/sim.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -51,8 +51,10 @@ test('feedback folds into playback state', () => {
 });
 
 test('config normalises junk into defaults', () => {
-  const c = normalise({ switcher: { type: 'bogus', port: 'x' }, rules: { onEnd: 'explode', lead: 999 }, destinations: [null, { host: 'h', port: 70000 }] });
+  const c = normalise({ switcher: { type: 'Not An Id!', settings: { v160hd: 'x', midra: { host: 'h' } } }, rules: { onEnd: 'explode', lead: 999 }, destinations: [null, { host: 'h', port: 70000 }] });
   assert.equal(c.switcher.type, 'none');
+  assert.deepEqual(c.switcher.settings, { midra: { host: 'h' } });
+  assert.equal(c.player.type, 'mitti');
   assert.equal(c.rules.onEnd, 'none');
   assert.equal(c.rules.lead, 60);
   assert.equal(c.destinations.length, 1);
@@ -96,4 +98,21 @@ test('the OSC link relays feedback byte for byte and tracks liveness', async () 
   link.stop();
   sink.close();
   await sim.close();
+});
+
+test('a v0.1.0 settings file carries across to per-driver settings', () => {
+  const c = normalise({
+    mitti: { host: '10.0.0.9', oscPort: 51000, feedbackPort: 51010, hyperdeck: true },
+    switcher: { type: 'v160hd', host: '10.0.0.2', port: 8023, password: '1234', mittiInput: 'MITTI', screens: [], layer: 1 },
+    rules: { enabled: true, via: 'hyperdeck' },
+  });
+  assert.equal(c.player.type, 'mitti');
+  assert.equal(c.player.settings.mitti.host, '10.0.0.9');
+  assert.equal(c.switcher.type, 'v160hd');
+  assert.equal(c.switcher.input, 'MITTI');
+  assert.equal(c.switcher.settings.v160hd.password, '1234');
+  assert.equal(c.rules.via, 'hyperdeck');
+  assert.equal('mitti' in c, false);
+  /* Normalising the result again changes nothing. */
+  assert.deepEqual(normalise(c), c);
 });

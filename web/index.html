@@ -39,7 +39,7 @@
   .inp b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inp.pgm { border-color: var(--pgm); box-shadow: inset 0 0 0 2px var(--pgm); }
   .inp.pvw { border-color: var(--pvw); box-shadow: inset 0 0 0 2px var(--pvw); }
-  .inp.mitti { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .inp.player { background: color-mix(in srgb, var(--accent) 14%, transparent); }
   form { display: grid; gap: 16px; }
   fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px 16px; margin: 0; background: var(--panel); min-width: 0; }
   legend { font-weight: 700; padding: 0 6px; }
@@ -68,7 +68,7 @@
 <main>
   <section class="grid">
     <div class="card">
-      <h2><span class="dot" id="mDot"></span>Mitti</h2>
+      <h2><span class="dot" id="mDot"></span><span id="mLabel">Player</span></h2>
       <div class="big" id="mNow">—</div>
       <div class="mono"><span id="mEl">--:--</span> / <span id="mTrt">--:--</span> · <b id="mLeft">--:--</b> left</div>
       <div class="bar"><span id="mBar"></span></div>
@@ -105,21 +105,18 @@
   <section class="card">
     <h2>Switcher inputs</h2>
     <div class="inputs" id="inputs"></div>
-    <p class="help">Red = program, green = preview, tinted = the input Mitti feeds. Click an input to put it in preview.</p>
+    <p class="help">Red = program, green = preview, tinted = the input the player feeds. Click an input to put it in preview.</p>
   </section>
 
   <form id="settings">
     <fieldset>
-      <legend>Mitti</legend>
+      <legend>Media player</legend>
       <div class="fields">
-        <label>Mitti address<input name="mitti.host" placeholder="127.0.0.1"></label>
-        <label>Mitti OSC port<input name="mitti.oscPort" type="number"></label>
-        <label>Feedback listen port<input name="mitti.feedbackPort" type="number"></label>
-        <label>HyperDeck port<input name="mitti.hyperdeckPort" type="number"></label>
-        <label class="check"><input type="checkbox" name="mitti.hyperdeck">Read clips over HyperDeck</label>
-        <label class="check"><input type="checkbox" name="mitti.advertise">Announce on Bonjour</label>
+        <label>Player<select name="player.type" id="playerType"></select></label>
       </div>
-      <p class="help">In Mitti → Preferences → OSC, set <b>Feedback To</b> to this machine and the listen port above (it is listed as “automitti” when Bonjour is on). Turn on HyperDeck control in Mitti for the clip durations the display shows for the next clip.</p>
+      <p class="help" id="playerDesc"></p>
+      <div class="fields" id="playerFields" style="margin-top:10px"></div>
+      <p class="help" id="playerHelp"></p>
     </fieldset>
 
     <fieldset>
@@ -127,75 +124,68 @@
       <div class="fields">
         <label>Announce on address<select name="advertiseAddress" id="addrSel"><option value="">Every interface</option></select></label>
       </div>
-      <p class="help">What Bonjour tells Mitti to connect to. Mitti uses the first address it is given, so on a machine with a VPN (ZeroTier, Tailscale) pick the show network's address here.</p>
+      <p class="help">What Bonjour tells the player to connect to. Mitti uses the first address it is given, so on a machine with a VPN (ZeroTier, Tailscale) pick the show network's address here.</p>
     </fieldset>
 
     <fieldset>
-      <legend>OSC feedback destinations</legend>
+      <legend>Feedback relay destinations</legend>
       <table><thead><tr><th style="width:26%">Name</th><th>Address</th><th style="width:14%">Port</th><th style="width:8%">On</th><th style="width:6%"></th></tr></thead><tbody id="dests"></tbody></table>
       <div class="row" style="margin-top:8px"><button type="button" id="addDest">Add destination</button></div>
-      <p class="help">Every packet Mitti sends is re-sent, byte for byte, to each destination — Companion's Mitti module (port 51001), a Stream Deck, another machine.</p>
+      <p class="help" id="relayHelp">Every feedback packet the player sends is re-sent, byte for byte, to each destination — for Mitti, Companion's Mitti module (port 51001), a Stream Deck, another machine.</p>
     </fieldset>
 
     <fieldset>
       <legend>Switcher</legend>
       <div class="fields">
-        <label>Type<select name="switcher.type">
-          <option value="none">None</option>
-          <option value="v160hd">Roland V-160HD</option>
-          <option value="midra">Analog Way Pulse 4K / Midra 4K</option>
-          <option value="manual">Manual / HTTP tally</option>
-        </select></label>
-        <label>Address<input name="switcher.host" placeholder="192.168.0.10"></label>
-        <label>Port (0 = default)<input name="switcher.port" type="number"></label>
-        <label data-for="v160hd">Network password<input name="switcher.password" type="password" autocomplete="off"></label>
-        <label>Mitti's input (number or name)<input name="switcher.mittiInput" placeholder="e.g. 3 or HDMI 3"></label>
-        <label data-for="midra">Screens (e.g. S1,S2 — empty = all)<input name="switcher.screens"></label>
-        <label data-for="midra">Mitti layer<input name="switcher.layer" type="number" min="1" max="8"></label>
+        <label>Switcher<select name="switcher.type" id="switcherType"></select></label>
+        <label>The player's input (number or name)<input name="switcher.input" placeholder="e.g. 3 or HDMI 3"></label>
       </div>
-      <p class="help">V-160HD: set a 4-character NETWORK PASSWORD on the unit (MENU → LAN CONTROL); it allows one LAN client, so RCS over LAN cannot run at the same time. Pulse 4K / Midra 4K: AWJ on port 10606.</p>
+      <p class="help" id="switcherDesc"></p>
+      <div class="fields" id="switcherFields" style="margin-top:10px"></div>
+      <p class="help" id="switcherHelp"></p>
+      <p class="help" id="driverProblems" hidden></p>
     </fieldset>
 
     <fieldset>
-      <legend>Emulated ATEM (Mitti's ATEM integration)</legend>
+      <legend>Emulated ATEM (the player's ATEM integration)</legend>
       <div class="fields">
         <label class="check"><input type="checkbox" name="atem.enabled">Emulate an ATEM</label>
-        <label>Name shown in Mitti<input name="atem.name"></label>
+        <label>Name shown in the player<input name="atem.name"></label>
         <label class="check"><input type="checkbox" name="atem.advertise">Announce on Bonjour</label>
       </div>
-      <p class="help">Mitti sees an ATEM whose inputs are the switcher's inputs and whose program/preview follow the real switcher. In Mitti choose it under ATEM, pick the input it is on, and set its switch behaviour; Mitti's Pause-at-End CUT/AUTO fires a take on the real switcher. Uses UDP 9910 — do not run it on a machine that is also an ATEM's control computer with ATEM Software Control connected to a real one on the same port.</p>
+      <p class="help">The player sees an ATEM whose inputs are the switcher's inputs and whose program/preview follow the real switcher. In Mitti, choose it under ATEM, pick the input it is on, and set its switch behaviour; Mitti's Pause-at-End CUT/AUTO fires a take on the real switcher. Uses UDP 9910 — do not run it on a machine that is also an ATEM's control computer with ATEM Software Control connected to a real one on the same port.</p>
     </fieldset>
 
     <fieldset>
-      <legend>NDI tally (Mitti's NDI integration)</legend>
+      <legend>NDI tally (the player's NDI integration)</legend>
       <div class="fields">
-        <label class="check"><input type="checkbox" name="ndi.enabled">Send NDI tally to Mitti</label>
-        <label>Mitti's NDI source<input name="ndi.source" list="ndiSources" placeholder="MACHINE (Mitti)"></label>
+        <label class="check"><input type="checkbox" name="ndi.enabled">Send NDI tally to the player</label>
+        <label>The player's NDI source<input name="ndi.source" list="ndiSources" placeholder="MACHINE (Mitti)"></label>
         <label>NDI library (optional)<input name="ndi.library" placeholder="auto"></label>
       </div>
       <datalist id="ndiSources"></datalist>
       <div class="row" style="margin-top:8px"><button type="button" id="findNdi">Find NDI sources</button><span class="dim" id="ndiFound"></span></div>
-      <p class="help">automitti joins Mitti's NDI output as a metadata-only receiver (no video) and reports it on program while Mitti's switcher input is on air. In Mitti, set the integration to NDI.</p>
+      <p class="help">automitti joins the player's NDI output as a metadata-only receiver (no video) and reports it on program while the player's switcher input is on air. In Mitti, set the integration to NDI.</p>
     </fieldset>
 
     <fieldset>
-      <legend>Rules — automitti drives Mitti directly</legend>
+      <legend>Rules — automitti drives the player directly</legend>
       <div class="fields">
         <label class="check"><input type="checkbox" name="rules.enabled">Enable rules</label>
-        <label>Send over<select name="rules.via"><option value="osc">OSC</option><option value="hyperdeck">HyperDeck</option></select></label>
+        <label>Send over<select name="rules.via" id="ruleVia"></select></label>
         <label>On program<select name="rules.onProgram"><option value="play">Play</option><option value="none">Do nothing</option></select></label>
         <label>On preview<select name="rules.onPreview"><option value="none">Do nothing</option><option value="rewind">Rewind to the top</option></select></label>
         <label>Taken off air<select name="rules.onLeave"><option value="none">Do nothing</option><option value="pause">Pause</option><option value="rewind">Stop and rewind</option><option value="next">Stop and load the next cue</option></select></label>
         <label>Cue ends<select name="rules.onEnd"><option value="none">Do nothing</option><option value="cut">CUT</option><option value="auto">AUTO</option></select></label>
         <label>End lead (seconds early)<input name="rules.lead" type="number" step="0.1" min="0" max="60"></label>
       </div>
-      <p class="help">The same choices Mitti offers for an ATEM, run from here over OSC or HyperDeck — for when Mitti is not using its ATEM or NDI integration. Don't enable rules while Mitti's own ATEM/NDI trigger points at automitti, or both will act on every take.</p>
+      <p class="help">The same choices Mitti offers for an ATEM, run from here through the player driver — for when the player is not using its own ATEM or NDI integration. Don't enable rules while the player's own ATEM/NDI trigger points at automitti, or both will act on every take.</p>
     </fieldset>
 
     <fieldset>
       <legend>Clip display</legend>
       <div class="fields">
-        <label>Title<input name="display.title" placeholder="Mitti"></label>
+        <label>Title<input name="display.title" placeholder="the player’s name"></label>
         <label>Amber under (s)<input name="display.warnAt" type="number" min="0"></label>
         <label>Red under (s)<input name="display.alertAt" type="number" min="0"></label>
         <label class="check"><input type="checkbox" name="display.showFrames">Show frames</label>
@@ -233,28 +223,28 @@ async function post(url, body) {
   return j;
 }
 
-document.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => post('/api/mitti', { action: b.dataset.m }));
+document.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => post('/api/player', { action: b.dataset.m }));
 document.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => post('/api/switcher', { action: b.dataset.s }).catch((e) => alert(e.message)));
 
 function render() {
   if (!status) return;
-  const { mitti: m, switcher: s, atem: a, ndi: n, rules: r, config: c } = status;
+  const { player: m, switcher: s, atem: a, ndi: n, rules: r, config: c } = status;
+  $('mLabel').textContent = m.label;
   $('version').textContent = `v${status.version}${status.stage ? ` (${status.stage})` : ''}`;
   dot($('mDot'), m.error ? 'bad' : m.online ? 'ok' : 'bad');
   $('mNow').textContent = m.current.name || (m.online ? '—' : 'not answering');
   $('mEl').textContent = fmt(m.elapsedSec); $('mTrt').textContent = fmt(m.current.trtSec); $('mLeft').textContent = fmt(m.remainingSec);
   $('mBar').style.width = `${((m.playhead || 0) * 100).toFixed(1)}%`;
   $('mNext').textContent = m.next.name ? `${m.next.name}${m.next.trtSec != null ? ` (${fmt(m.next.trtSec)})` : ''}` : '—';
-  const hd = m.hyperdeck;
-  $('mInfo').textContent = m.error ? m.error : `${m.host} · OSC ${m.online ? 'online' : 'offline'} · HyperDeck ${hd ? hd.status : 'off'}${hd?.error && hd.status !== 'connected' ? ` (${hd.error})` : ''}${hd?.clipCount ? ` (${hd.clipCount} clips)` : ''} · ${m.playing ? 'playing' : 'paused'}`;
+  $('mInfo').textContent = m.error ? m.error : `${m.summary || (m.online ? 'online' : 'offline')} · ${m.playing ? 'playing' : 'paused'}`;
 
   dot($('sDot'), s.status === 'online' ? 'ok' : s.status === 'off' ? '' : s.status === 'connecting' ? 'warn' : 'bad');
   $('sName').textContent = s.type === 'none' ? 'None' : `${s.label}${s.device?.version ? ` ${s.device.version}` : ''}`;
   const name = (id) => s.inputs.find((i) => i.id === id)?.name ?? (id == null ? '—' : `#${id}`);
-  $('sInfo').innerHTML = s.type === 'none' ? 'Not configured' : `${esc(s.status)}${s.error ? ` — ${esc(s.error)}` : ''}<br>PGM <b>${esc(name(s.program))}</b> · PVW <b>${esc(name(s.preview))}</b>${s.inTransition ? ' · <b>in transition</b>' : ''}<br>Mitti input: ${s.mittiInput == null ? '<i>not set</i>' : esc(name(s.mittiInput))}`;
+  $('sInfo').innerHTML = s.type === 'none' ? 'Not configured' : `${esc(s.status)}${s.error ? ` — ${esc(s.error)}` : ''}<br>PGM <b>${esc(name(s.program))}</b> · PVW <b>${esc(name(s.preview))}</b>${s.inTransition ? ' · <b>in transition</b>' : ''}<br>${esc(m.label)}'s input: ${s.playerInput == null ? '<i>not set</i>' : esc(name(s.playerInput))}`;
   $('inputs').innerHTML = s.inputs.map((i) => {
     const t = s.tally[i.id] || {};
-    return `<div class="inp ${t.program ? 'pgm' : t.preview ? 'pvw' : ''} ${i.id === s.mittiInput ? 'mitti' : ''}" data-id="${i.id}" title="Put in preview"><b>${esc(i.name)}</b><span class="dim">${i.id}${i.id === s.mittiInput ? ' · Mitti' : ''}</span></div>`;
+    return `<div class="inp ${t.program ? 'pgm' : t.preview ? 'pvw' : ''} ${i.id === s.playerInput ? 'player' : ''}" data-id="${i.id}" title="Put in preview"><b>${esc(i.name)}</b><span class="dim">${i.id}${i.id === s.playerInput ? ` · ${esc(m.label)}` : ''}</span></div>`;
   }).join('') || '<span class="dim">No switcher connected.</span>';
 
   dot($('aDot'), !a.enabled ? '' : a.error ? 'bad' : a.clients?.length ? 'ok' : 'warn');
@@ -264,11 +254,13 @@ function render() {
   $('nInfo').innerHTML = !n.enabled ? 'Off' : n.error ? esc(n.error) : `${n.connectedTo ? esc(n.connectedTo) : `looking for “${esc(n.source)}”`}<br>${n.connections ? 'connected' : 'not connected'} · tally ${n.tally?.program ? '<b style="color:var(--pgm)">PROGRAM</b>' : n.tally?.preview ? '<b style="color:var(--pvw)">preview</b>' : 'off'}`;
 
   dot($('rDot'), !c.rules.enabled ? '' : r.active ? 'ok' : 'warn');
-  $('rInfo').innerHTML = !c.rules.enabled ? 'Off' : !r.active ? 'Waiting for the switcher and Mitti\'s input' : `Active over ${esc(c.rules.via)}${r.last ? `<br>Last: ${esc(r.last.what)}` : ''}`;
+  $('rInfo').innerHTML = !c.rules.enabled ? 'Off' : !r.active ? 'Waiting for the switcher and the player\'s input' : `Active over ${esc(c.rules.via)}${r.last ? `<br>Last: ${esc(r.last.what)}` : ''}`;
 
   const on = c.destinations.filter((d) => d.enabled);
   dot($('oDot'), on.length ? 'ok' : '');
-  $('oInfo').innerHTML = `${on.length} destination${on.length === 1 ? '' : 's'} · listening on UDP ${m.feedbackPort}<br>${m.stats.received} in · ${m.stats.relayed} out${m.stats.relayErrors ? ` · ${m.stats.relayErrors} errors` : ''}`;
+  const relay = m.detail?.relay;
+  $('oInfo').innerHTML = !relay ? `${esc(m.label)} does not relay its feedback`
+    : `${on.length} destination${on.length === 1 ? '' : 's'} · listening on UDP ${relay.listenPort}<br>${relay.received} in · ${relay.relayed} out${relay.relayErrors ? ` · ${relay.relayErrors} errors` : ''}`;
   $('displayUrl').textContent = `${location.origin}/display`;
 }
 
@@ -291,9 +283,63 @@ function fillAddresses() {
     + (want && !list.some((a) => a.address === want) ? `<option value="${esc(want)}">${esc(want)} (not present)</option>` : '');
 }
 
+/* ---- driver settings, drawn from each driver's own schema ---- */
+
+const kinds = { player: 'players', switcher: 'switchers' };
+const driverOf = (kind, id) => (status.drivers?.[kinds[kind]] || []).find((d) => d.id === id);
+
+function fillTypes(kind, c) {
+  const sel = $(`${kind}Type`);
+  const list = status.drivers?.[kinds[kind]] || [];
+  const none = kind === 'switcher' ? '<option value="none">None</option>' : '';
+  sel.innerHTML = none + list.map((d) => `<option value="${esc(d.id)}">${esc(d.label)}${d.source !== 'built-in' ? ' (added)' : ''}</option>`).join('');
+  sel.value = c[kind].type;
+}
+
+/** One driver's fields, named `<kind>.settings.<id>.<key>` so saving is a plain setIn. */
+function drawDriver(kind, c) {
+  const id = $(`${kind}Type`).value;
+  const d = driverOf(kind, id);
+  $(`${kind}Desc`).textContent = d?.description || '';
+  $(`${kind}Help`).textContent = d?.help || '';
+  const saved = c[kind].settings?.[id] || {};
+  $(`${kind}Fields`).innerHTML = (d?.settings || []).map((f) => {
+    const name = `${kind}.settings.${id}.${f.key}`;
+    let v = saved[f.key] ?? f.default ?? '';
+    if (Array.isArray(v)) v = v.join(',');
+    const tip = f.help ? ` title="${esc(f.help)}"` : '';
+    if (f.type === 'bool') return `<label class="check"${tip}><input type="checkbox" name="${name}" ${v ? 'checked' : ''}>${esc(f.label)}</label>`;
+    if (f.type === 'select') return `<label${tip}>${esc(f.label)}<select name="${name}">${f.options.map((o) => `<option value="${esc(o.value)}" ${o.value === v ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></label>`;
+    const type = f.type === 'number' ? 'number' : f.type === 'password' ? 'password' : 'text';
+    const range = f.type === 'number' ? `${f.min != null ? ` min="${f.min}"` : ''}${f.max != null ? ` max="${f.max}"` : ''}` : '';
+    return `<label${tip}>${esc(f.label)}${f.required ? ' *' : ''}<input type="${type}" name="${name}" data-type="${f.type}" value="${esc(v)}" placeholder="${esc(f.placeholder || '')}"${range}${type === 'password' ? ' autocomplete="off"' : ''}></label>`;
+  }).join('');
+  if (kind === 'player') {
+    const via = $('ruleVia');
+    via.innerHTML = (d?.via || []).map((o) => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('') || '<option value="">—</option>';
+    via.value = c.rules.via;
+    if (via.selectedIndex < 0) via.selectedIndex = 0;
+  }
+}
+$('playerType').onchange = () => drawDriver('player', status.config);
+$('switcherType').onchange = () => drawDriver('switcher', status.config);
+
+function showProblems() {
+  const bad = status.drivers?.problems || [];
+  const el = $('driverProblems');
+  el.hidden = !bad.length;
+  el.textContent = bad.map((p) => `Driver not loaded — ${p.path}: ${p.problems.join('; ')}`).join('\n');
+}
+
 function fillForm(c) {
   fillAddresses();
+  fillTypes('player', c);
+  fillTypes('switcher', c);
+  drawDriver('player', c);
+  drawDriver('switcher', c);
+  showProblems();
   for (const el of form.elements) {
+    if (el.name?.includes('.settings.')) continue; // drawn by drawDriver
     if (!el.name || el.closest('#dests')) continue;
     const v = get(c, el.name);
     if (el.type === 'checkbox') el.checked = !!v;
@@ -301,7 +347,6 @@ function fillForm(c) {
   }
   destinations = c.destinations.map((d) => ({ ...d }));
   renderDests();
-  showTypeFields();
   formDirty = false;
 }
 
@@ -323,19 +368,15 @@ $('dests').oninput = (e) => {
 $('dests').onclick = (e) => { if (e.target.dataset.del != null) { destinations.splice(Number(e.target.dataset.del), 1); renderDests(); formDirty = true; } };
 $('addDest').onclick = () => { destinations.push({ name: `Destination ${destinations.length + 1}`, host: '', port: 51001, enabled: true }); renderDests(); formDirty = true; };
 
-function showTypeFields() {
-  const t = form.elements['switcher.type'].value;
-  form.querySelectorAll('[data-for]').forEach((el) => { el.hidden = el.dataset.for !== t; });
-}
-form.addEventListener('input', (e) => { if (!e.target.closest('#dests')) formDirty = true; showTypeFields(); });
+form.addEventListener('input', (e) => { if (!e.target.closest('#dests')) formDirty = true; });
 
 form.onsubmit = async (e) => {
   e.preventDefault();
   const c = structuredClone(status.config);
   for (const el of form.elements) {
     if (!el.name || el.closest('#dests')) continue;
-    let v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
-    if (el.name === 'switcher.screens') v = el.value.split(',').map((s) => s.trim()).filter(Boolean);
+    let v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+    if (el.dataset.type === 'list') v = el.value.split(',').map((x) => x.trim()).filter(Boolean);
     setIn(c, el.name, v);
   }
   c.destinations = destinations;

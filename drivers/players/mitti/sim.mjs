@@ -3,7 +3,7 @@
  * A Mitti on this machine: its OSC commands and feedback, and its HyperDeck
  * emulation, over one playlist that plays in real time.
  *
- *   node tools/mitti-sim.mjs --feedback 127.0.0.1:51010
+ *   node drivers/players/mitti/sim.mjs --feedback 127.0.0.1:51010
  *   … --osc 51000 --hyperdeck 9993 --host 127.0.0.1
  *
  * What automitti's tests run against and what to point it at without Mitti.
@@ -18,7 +18,7 @@
 import dgram from 'node:dgram';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
-import { decode, encode } from '../server/mitti/osc.js';
+import { decode, encode } from '../../../server/lib/osc.js';
 
 const FPS = 25;
 const FORMAT = '1080p25';

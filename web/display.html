@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mitti clock</title>
+<title>Clip clock</title>
 <style>
   :root {
     --bg: #07080a; --panel: #111318; --line: #23262e; --text: #eef0f4; --dim: #8a90a0;
@@ -112,11 +112,11 @@ function frame() {
   requestAnimationFrame(frame);
   const st = $('state');
   if (!status) { st.className = 'chip offline'; st.lastChild.textContent = 'no server'; return; }
-  const m = status.mitti;
+  const m = status.player;
   const d = status.config.display;
   const frames = showFrames || d.showFrames;
-  $('title').textContent = d.title || 'Mitti';
-  document.title = d.title || 'Mitti clock';
+  $('title').textContent = d.title || m.label || 'Player';
+  document.title = d.title || `${m.label || 'Player'} clock`;
 
   /* Between feedback packets, run the clock locally while playing. */
   /* Seconds since Mitti last reported, on the server's clock then ours; capped
@@ -132,12 +132,12 @@ function frame() {
   }
 
   st.className = `chip ${!m.online ? 'offline' : m.playing ? 'playing' : 'paused'}`;
-  st.lastChild.textContent = !m.online ? 'Mitti offline' : m.playing ? 'Playing' : 'Paused';
+  st.lastChild.textContent = !m.online ? `${m.label} offline` : m.playing ? 'Playing' : 'Paused';
 
   const sw = status.switcher;
   const tally = $('tally');
-  if (sw && sw.status === 'online' && sw.mittiInput != null) {
-    const t = sw.tally?.[sw.mittiInput] || {};
+  if (sw && sw.status === 'online' && sw.playerInput != null) {
+    const t = sw.tally?.[sw.playerInput] || {};
     tally.hidden = false;
     tally.className = `chip ${t.program ? 'onair' : t.preview ? 'preview' : ''}`;
     tally.lastChild.textContent = t.program ? 'On air' : t.preview ? 'Preview' : 'Off air';

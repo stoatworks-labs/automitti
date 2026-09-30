@@ -25,16 +25,51 @@ const str = (v, fallback = '') => (typeof v === 'string' ? v.trim() : fallback);
 const bool = (v, fallback) => (typeof v === 'boolean' ? v : fallback);
 const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
 
-export const SWITCHER_TYPES = ['none', 'v160hd', 'midra', 'manual'];
 export const RULE_VIA = ['osc', 'hyperdeck'];
 export const ON_PROGRAM = ['play', 'none'];
 export const ON_PREVIEW = ['none', 'rewind'];
 export const ON_LEAVE = ['none', 'pause', 'rewind', 'next'];
 export const ON_END = ['none', 'cut', 'auto'];
 
+const ID = /^[a-z][a-z0-9-]{0,31}$/;
+const driverId = (v, fallback) => (ID.test(String(v ?? '')) || v === 'none' ? String(v) : fallback);
+
+/* Per-driver settings are kept for EVERY driver ever configured, so switching
+   type and back loses nothing. Each driver's own schema normalises its entry
+   when it is used (core/contract.js normaliseSettings); here they are only
+   kept as plain objects. */
+const settingsMap = (v) => {
+  const out = {};
+  for (const [k, val] of Object.entries(v && typeof v === 'object' ? v : {})) {
+    if (ID.test(k) && val && typeof val === 'object' && !Array.isArray(val)) out[k] = { ...val };
+  }
+  return out;
+};
+
+/**
+ * v0.1.0 kept Mitti's settings at the top level (`mitti`) and one switcher's
+ * settings flat inside `switcher`, with the player's input as `mittiInput`.
+ * Carried across once, on read.
+ */
+function migrate(r) {
+  const out = { ...r };
+  if (r.mitti && !r.player) {
+    out.player = { type: 'mitti', settings: { mitti: { ...r.mitti } } };
+    delete out.mitti;
+  }
+  const sw = r.switcher;
+  if (sw && !sw.settings && ('host' in sw || 'mittiInput' in sw)) {
+    const { type = 'none', mittiInput, host, port, password, screens, layer } = sw;
+    const flat = { host, port: port || undefined, password, screens, layer };
+    for (const k of Object.keys(flat)) if (flat[k] === undefined || flat[k] === '') delete flat[k];
+    out.switcher = { type, input: mittiInput ?? '', settings: type !== 'none' ? { [type]: flat } : {} };
+  }
+  return out;
+}
+
 export function normalise(raw = {}) {
-  const r = raw && typeof raw === 'object' ? raw : {};
-  const m = r.mitti || {};
+  const r = migrate(raw && typeof raw === 'object' ? raw : {});
+  const player = r.player || {};
   const sw = r.switcher || {};
   const atem = r.atem || {};
   const ndi = r.ndi || {};
@@ -54,26 +89,17 @@ export function normalise(raw = {}) {
     httpBind: str(r.httpBind) || '0.0.0.0',
     /* The one IPv4 address Bonjour announces (empty = every interface). */
     advertiseAddress: /^\d{1,3}(\.\d{1,3}){3}$/.test(str(r.advertiseAddress)) ? str(r.advertiseAddress) : '',
-    mitti: {
-      host: str(m.host, '127.0.0.1'),
-      oscPort: int(m.oscPort, 1, 65535, 51000),
-      feedbackPort: int(m.feedbackPort, 0, 65535, 51010), // 0 = any free port (tests),
-      advertise: bool(m.advertise, true),
-      hyperdeck: bool(m.hyperdeck, true),
-      hyperdeckPort: int(m.hyperdeckPort, 1, 65535, 9993),
+    player: {
+      type: driverId(player.type, 'mitti'),
+      settings: settingsMap(player.settings),
     },
+    /* Where the player's feedback is re-sent, for players that relay. */
     destinations,
     switcher: {
-      type: oneOf(sw.type, SWITCHER_TYPES, 'none'),
-      host: str(sw.host),
-      port: int(sw.port, 0, 65535, 0), // 0 = the driver's default
-      password: str(sw.password),
-      /* Which switcher input Mitti feeds — what NDI tally and the rules follow. */
-      mittiInput: str(sw.mittiInput),
-      /* Midra 4K / Pulse: the screens that count as "on air"; empty = all. */
-      screens: Array.isArray(sw.screens) ? sw.screens.map(String).filter(Boolean) : [],
-      /* Midra 4K / Pulse: the layer Mitti's input is put on for a preview/program select. */
-      layer: int(sw.layer, 1, 8, 1),
+      type: driverId(sw.type, 'none'),
+      /* Which switcher input the player feeds — what NDI tally and the rules follow. */
+      input: str(sw.input),
+      settings: settingsMap(sw.settings),
     },
     atem: {
       enabled: bool(atem.enabled, false),
@@ -88,7 +114,7 @@ export function normalise(raw = {}) {
     },
     rules: {
       enabled: bool(rules.enabled, false),
-      via: oneOf(rules.via, RULE_VIA, 'osc'),
+      via: str(rules.via) || 'osc',
       onProgram: oneOf(rules.onProgram, ON_PROGRAM, 'play'),
       onPreview: oneOf(rules.onPreview, ON_PREVIEW, 'none'),
       onLeave: oneOf(rules.onLeave, ON_LEAVE, 'none'),

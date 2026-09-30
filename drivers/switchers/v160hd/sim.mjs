@@ -2,7 +2,7 @@
 /*
  * A Roland V-160HD's LAN control, answered on this machine:
  *
- *   node tools/v160hd-sim.mjs [--port 8023] [--password 0000] [--version 3.50]
+ *   node drivers/switchers/v160hd/sim.mjs [--port 8023] [--password 0000] [--version 3.50]
  *
  * Built from docs/V160HD.md — the Remote Control Guide plus what the
  * Companion client does — so it agrees with the documents, not necessarily
