@@ -16,6 +16,11 @@ drive Mitti the way an ATEM does. automitti also:
 - serves a **clip display page** with the current and next clip, their TRTs, and the current
   clip's elapsed and remaining time.
 
+![The clip display: current clip, big countdown, elapsed, remaining, TRT, and the next clip with its TRT](docs/hero.png)
+
+*The clip display at `/display`, fed by the bundled Mitti simulator. The countdown goes amber
+under 30 s and red under 10 s, and the ON AIR chip is the switcher's tally for Mitti's input.*
+
 ```
                         ┌──────────────── automitti ────────────────┐
  V-160HD  ◀─ TCP 8023 ─▶│ switcher driver ─┬─▶ emulated ATEM (UDP 9910) ◀──── Mitti's ATEM integration
@@ -45,6 +50,10 @@ every take.
 "On air" includes transitions. On a layer switcher (Pulse 4K) an input is on program while it
 is a source of any fitted layer in a screen's program buffer. **During a take both buffers
 count**, so a clip rolls as the mix starts, not after it.
+
+![The control page: Mitti, switcher, emulated ATEM, NDI and relay status, the switcher's inputs with tally, and settings](docs/screenshots/control.png)
+
+*The control page, against the Mitti and V-160HD simulators.*
 
 ## Switchers
 
