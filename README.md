@@ -212,3 +212,7 @@ tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK)
 launcher/          the tray app (the fleet's av-launcher shell, Tauri)
 docs/              DRIVERS.md, and MITTI.md, ATEM.md, V160HD.md: the protocol research
 ```
+
+<!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+<!-- attributions:end -->
