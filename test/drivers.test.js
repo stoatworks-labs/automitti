@@ -76,23 +76,26 @@ test('rules: play on program, pause off air, AUTO at the cue end — through the
   ] });
   const swSim = await startV160hdSim({ port: 0, password: '0000', autoMs: 100 });
   const cfg = normalise({
-    player: { type: 'mitti', settings: { mitti: { host: '127.0.0.1', oscPort: mittiSim.oscPort, feedbackPort: 0, advertise: false, hyperdeckPort: mittiSim.hyperdeckPort } } },
-    switcher: { type: 'v160hd', input: 'MITTI', settings: { v160hd: { host: '127.0.0.1', port: swSim.port, password: '0000' } } },
-    rules: { enabled: true, onProgram: 'play', onLeave: 'pause', onEnd: 'auto' },
+    switcher: { type: 'v160hd', settings: { v160hd: { host: '127.0.0.1', port: swSim.port, password: '0000' } } },
+    devices: [{
+      player: { type: 'mitti', settings: { mitti: { host: '127.0.0.1', oscPort: mittiSim.oscPort, feedbackPort: 0, advertise: false, hyperdeckPort: mittiSim.hyperdeckPort } } },
+      input: 'MITTI',
+      rules: { enabled: true, onProgram: 'play', onLeave: 'pause', onEnd: 'auto' },
+    }],
   });
-  const config = () => cfg;
-  const player = new Player({ config, registry });
+  const device = () => cfg.devices[0];
+  const player = new Player({ config: device, registry });
   await player.start();
   mittiSim.setFeedback({ host: '127.0.0.1', port: player.driver.osc.listenPort });
-  const switcher = new Switcher({ config, registry });
+  const switcher = new Switcher({ config: () => cfg, registry });
   await switcher.start();
-  const rules = new Rules({ config, switcher, player });
+  const rules = new Rules({ config: device, switcher, player });
   const did = [];
   rules.on('change', () => { const w = rules.snapshot().last?.what; if (w && did.at(-1) !== w) did.push(w); });
   rules.start();
 
   try {
-    assert.ok(await until(() => switcher.status === 'online' && switcher.playerInput() === 3));
+    assert.ok(await until(() => switcher.status === 'online' && switcher.inputOf(device().input) === 3));
     assert.equal(switcher.inputCount(), 52);
     player.command('/mitti/2/jump');
     assert.ok(await until(() => player.snapshot().current.name === 'Short'));
@@ -109,6 +112,7 @@ test('rules: play on program, pause off air, AUTO at the cue end — through the
     assert.deepEqual(did, ['on program → play', 'cue ended → auto', 'taken off → pause']);
     assert.equal(mittiSim.state.playing, false);
   } finally {
+    rules.stop();
     switcher.stop();
     await player.stop();
     await mittiSim.close();
@@ -117,11 +121,11 @@ test('rules: play on program, pause off air, AUTO at the cue end — through the
 });
 
 test('an unknown driver is reported, not fatal', async () => {
-  const cfg = normalise({ switcher: { type: 'no-such-switcher' }, player: { type: 'no-such-player' } });
+  const cfg = normalise({ switcher: { type: 'no-such-switcher' }, devices: [{ player: { type: 'no-such-player' } }] });
   const s = new Switcher({ config: () => cfg, registry });
   await s.start();
   assert.match(s.snapshot().error, /no switcher driver called "no-such-switcher"/);
-  const p = new Player({ config: () => cfg, registry });
+  const p = new Player({ config: () => cfg.devices[0], registry });
   await p.start();
   assert.match(p.snapshot().error, /no player driver called "no-such-player"/);
   await assert.rejects(() => p.act('play'), /no player/);
@@ -135,7 +139,7 @@ test('a switcher missing a required setting says which', async () => {
 });
 
 test('manual switcher derives tally from program/preview', async () => {
-  const cfg = normalise({ switcher: { type: 'manual', input: '4' } });
+  const cfg = normalise({ switcher: { type: 'manual' } });
   const s = new Switcher({ config: () => cfg, registry });
   await s.start();
   await s.command('program', 4);
@@ -143,6 +147,7 @@ test('manual switcher derives tally from program/preview', async () => {
   await s.command('preview', 2);
   await s.command('cut');
   assert.deepEqual(s.tallyOf(4), { program: false, preview: true });
-  assert.equal(s.playerInput(), 4);
+  assert.equal(s.inputOf('4'), 4);
+  assert.equal(s.inputOf(''), null);
   assert.equal(s.inputCount(), 20);
 });

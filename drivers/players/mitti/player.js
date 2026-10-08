@@ -76,7 +76,7 @@ export class MittiPlayer extends EventEmitter {
     } catch (err) {
       this.osc.stop();
       this.error = err.code === 'EADDRINUSE'
-        ? `UDP ${this.s.feedbackPort} is already in use — another automitti, or Companion on this machine?`
+        ? `UDP ${this.s.feedbackPort} is already in use — another device here, another automitti, or Companion on this machine?`
         : err.message;
       this.log(`Mitti feedback: ${this.error}`);
     }

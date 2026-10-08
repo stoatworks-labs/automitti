@@ -51,15 +51,55 @@ test('feedback folds into playback state', () => {
 });
 
 test('config normalises junk into defaults', () => {
-  const c = normalise({ switcher: { type: 'Not An Id!', settings: { v160hd: 'x', midra: { host: 'h' } } }, rules: { onEnd: 'explode', lead: 999 }, destinations: [null, { host: 'h', port: 70000 }] });
+  const c = normalise({ switcher: { type: 'Not An Id!', settings: { v160hd: 'x', midra: { host: 'h' } } }, devices: [{ rules: { onEnd: 'explode', lead: 999 }, destinations: [null, { host: 'h', port: 70000 }] }] });
   assert.equal(c.switcher.type, 'none');
   assert.deepEqual(c.switcher.settings, { midra: { host: 'h' } });
-  assert.equal(c.player.type, 'mitti');
-  assert.equal(c.rules.onEnd, 'none');
-  assert.equal(c.rules.lead, 60);
-  assert.equal(c.destinations.length, 1);
-  assert.equal(c.destinations[0].port, 51001);
+  const [d] = c.devices;
+  assert.equal(d.player.type, 'mitti');
+  assert.equal(d.rules.onEnd, 'none');
+  assert.equal(d.rules.lead, 60);
+  assert.equal(d.destinations.length, 1);
+  assert.equal(d.destinations[0].port, 51001);
   assert.equal(c.atem.enabled, false);
+});
+
+test('devices: always one, ids unique, inputs kept as numbers or names', () => {
+  const none = normalise({});
+  assert.equal(none.devices.length, 1);
+  assert.deepEqual([none.devices[0].id, none.devices[0].name], ['mitti', 'Mitti']);
+  assert.equal(normalise({ devices: [] }).devices.length, 1);
+
+  const c = normalise({ devices: [{ id: 'a', input: 3 }, { id: 'a', name: 'Backup', input: ' HDMI 4 ' }, { id: 'Not An Id!' }, null] });
+  assert.deepEqual(c.devices.map((d) => d.id), ['a', 'a-2', 'mitti-3']);
+  assert.deepEqual(c.devices.map((d) => d.name), ['Mitti', 'Backup', 'Mitti 3']);
+  assert.deepEqual(c.devices.map((d) => d.input), ['3', 'HDMI 4', '']);
+  assert.deepEqual(normalise(c), c, 'normalising again changes nothing');
+});
+
+test('a v0.1.1 settings file becomes the first device', () => {
+  const c = normalise({
+    player: { type: 'mitti', settings: { mitti: { host: '10.0.0.9', feedbackPort: 51010 } } },
+    destinations: [{ name: 'Companion', host: '127.0.0.1', port: 51001 }],
+    switcher: { type: 'manual', input: '3', settings: {} },
+    ndi: { enabled: true, source: 'SHOW (Mitti)', library: '/opt/ndi/libndi.dylib' },
+    rules: { enabled: true, onLeave: 'pause' },
+    display: { title: 'Main VT', warnAt: 20 },
+  });
+  assert.deepEqual(c.ndi, { library: '/opt/ndi/libndi.dylib' }, 'the NDI library stays the machine\'s');
+  assert.equal(c.devices.length, 1);
+  const [d] = c.devices;
+  assert.equal(d.id, 'mitti');
+  assert.equal(d.name, 'Main VT', 'the display title names it');
+  assert.equal(d.player.settings.mitti.host, '10.0.0.9');
+  assert.equal(d.input, '3');
+  assert.equal(d.destinations[0].name, 'Companion');
+  assert.deepEqual(d.ndi, { enabled: true, source: 'SHOW (Mitti)' });
+  assert.equal(d.rules.onLeave, 'pause');
+  assert.equal(c.display.warnAt, 20);
+  for (const k of ['player', 'destinations', 'rules']) assert.equal(k in c, false, `${k} left the top level`);
+  assert.equal('input' in c.switcher, false);
+  assert.equal('title' in c.display, false);
+  assert.deepEqual(normalise(c), c);
 });
 
 test('the OSC link relays feedback byte for byte and tracks liveness', async () => {
@@ -106,12 +146,13 @@ test('a v0.1.0 settings file carries across to per-driver settings', () => {
     switcher: { type: 'v160hd', host: '10.0.0.2', port: 8023, password: '1234', mittiInput: 'MITTI', screens: [], layer: 1 },
     rules: { enabled: true, via: 'hyperdeck' },
   });
-  assert.equal(c.player.type, 'mitti');
-  assert.equal(c.player.settings.mitti.host, '10.0.0.9');
+  const [d] = c.devices;
+  assert.equal(d.player.type, 'mitti');
+  assert.equal(d.player.settings.mitti.host, '10.0.0.9');
   assert.equal(c.switcher.type, 'v160hd');
-  assert.equal(c.switcher.input, 'MITTI');
+  assert.equal(d.input, 'MITTI');
   assert.equal(c.switcher.settings.v160hd.password, '1234');
-  assert.equal(c.rules.via, 'hyperdeck');
+  assert.equal(d.rules.via, 'hyperdeck');
   assert.equal('mitti' in c, false);
   /* Normalising the result again changes nothing. */
   assert.deepEqual(normalise(c), c);

@@ -19,6 +19,10 @@
 import { EventEmitter } from 'node:events';
 
 export class Rules extends EventEmitter {
+  /**
+   * @param {{config: () => object}} opts  `config` is the DEVICE's settings
+   *   (config.js normaliseDevice): its `rules`, and the `input` they follow.
+   */
   constructor({ config, switcher, player, log = () => {} }) {
     super();
     this.config = config;
@@ -28,16 +32,26 @@ export class Rules extends EventEmitter {
     this.was = { program: false, preview: false };
     this.endFiredFor = null;
     this.last = null;
+    this.onTally = () => this.#onTally();
+    this.onPlayback = () => this.#onPlayback();
   }
 
   start() {
-    this.switcher.on('tally', () => this.#onTally());
-    this.player.on('change', () => this.#onPlayback());
+    this.switcher.on('tally', this.onTally);
+    this.player.on('change', this.onPlayback);
   }
+
+  /** Let go of the switcher, which outlives a removed device. */
+  stop() {
+    this.switcher.off('tally', this.onTally);
+    this.player.off('change', this.onPlayback);
+  }
+
+  #input() { return this.switcher.inputOf(this.config().input); }
 
   #enabled() {
     const r = this.config().rules;
-    return r.enabled && this.switcher.playerInput() != null;
+    return r.enabled && this.#input() != null;
   }
 
   #act(action) {
@@ -51,7 +65,7 @@ export class Rules extends EventEmitter {
   }
 
   #onTally() {
-    const id = this.switcher.playerInput();
+    const id = this.#input();
     const now = id == null ? { program: false, preview: false } : this.switcher.tallyOf(id);
     const was = this.was;
     this.was = now;

@@ -16,30 +16,69 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  header.top { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
-  header.top h1 { font-size: 17px; margin: 0; }
-  header.top .sp { flex: 1; }
+  .sp { flex: 1; }
   a { color: var(--accent); }
+
+  .top { position: sticky; top: 0; z-index: 3; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .top header { display: flex; align-items: center; gap: 12px; padding: 10px 16px 6px; }
+  .top h1 { font-size: 17px; margin: 0; }
+  .conn { font-size: 12px; color: var(--bad); }
+  nav.tabs { display: flex; align-items: stretch; gap: 2px; padding: 0 12px; overflow-x: auto; scrollbar-width: thin; }
+  nav.tabs a, nav.tabs button { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; white-space: nowrap; text-decoration: none; color: var(--dim);
+    border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; cursor: pointer; border-radius: 0; }
+  nav.tabs a:hover, nav.tabs button:hover { color: var(--text); }
+  nav.tabs a.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  nav.tabs .add { color: var(--accent); }
+  nav.tabs .tname { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; }
+
   main { max-width: 1180px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .devgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+  .devtop { display: grid; gap: 12px; }
+  .devtop .side { display: grid; gap: 12px; align-content: start; }
+  @media (min-width: 760px) { .devtop { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
-  .card h2 { font-size: 12px; margin: 0 0 8px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: 8px; }
+  .card h2 { font-size: 12px; margin: 0 0 8px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .card h2 a { color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card h2 a:hover { color: var(--accent); }
+  .dev h2 { font-size: 13px; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); display: inline-block; flex: none; }
   .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
   .big { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .dim { color: var(--dim); }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .clock { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .remain { font-size: 30px; font-weight: 800; letter-spacing: -.01em; }
+  .remain.warn { color: var(--warn); } .remain.alert { color: var(--bad); }
+  .next { margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .transport { margin-top: 10px; }
+  .transport button { padding: 6px 10px; }
+  .modes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .small { font-size: 12.5px; }
   button { font: inherit; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; }
   button:hover { border-color: var(--accent); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   button.danger { color: var(--bad); }
+
+  .chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--dim); flex: none; }
+  .chip.pgm { background: var(--pgm); border-color: var(--pgm); color: #fff; }
+  .chip.pvw { border-color: var(--pvw); color: var(--pvw); }
+  .tag { display: inline-flex; padding: 1px 7px; border-radius: 5px; font-size: 11.5px; border: 1px solid var(--line); color: var(--dim); }
+  .tag.ok { border-color: color-mix(in srgb, var(--ok) 55%, transparent); color: var(--ok); }
+  .tag.warn { border-color: color-mix(in srgb, var(--warn) 55%, transparent); color: var(--warn); }
+  .tag.bad { border-color: color-mix(in srgb, var(--bad) 55%, transparent); color: var(--bad); }
+  nav.tabs .chip { font-size: 10px; padding: 0 6px; }
+
   .inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
-  .inp { border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font-size: 12px; min-width: 0; }
+  .inp { border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font-size: 12px; min-width: 0; cursor: pointer; }
   .inp b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inp span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inp.pgm { border-color: var(--pgm); box-shadow: inset 0 0 0 2px var(--pgm); }
   .inp.pvw { border-color: var(--pvw); box-shadow: inset 0 0 0 2px var(--pvw); }
   .inp.player { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
   form { display: grid; gap: 16px; }
   fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px 16px; margin: 0; background: var(--panel); min-width: 0; }
   legend { font-weight: 700; padding: 0 6px; }
@@ -49,163 +88,45 @@
   input, select { font: inherit; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--input); color: var(--text); min-width: 0; width: 100%; }
   input[type=checkbox] { width: auto; }
   p.help { margin: 6px 0 0; color: var(--dim); font-size: 12.5px; }
+  p.help:empty { display: none; }
+  .warnings { color: var(--warn); }
   table { width: 100%; border-collapse: collapse; }
   td, th { padding: 4px 6px 4px 0; text-align: left; font-size: 12px; color: var(--dim); font-weight: 600; }
-  td input { width: 100%; }
-  .log { font: 12px/1.5 var(--mono); max-height: 220px; overflow: auto; white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 8px; }
   .bar span { display: block; height: 100%; background: var(--ok); width: 0; }
-  .saved { color: var(--ok); font-size: 13px; }
-  @media (max-width: 520px) { main { padding: 12px; } }
+  .bar.warn span { background: var(--warn); } .bar.alert span { background: var(--bad); }
+
+  .logwrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 90px; }
+  .logwrap summary { cursor: pointer; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; padding: 4px 0 8px; }
+  .log { font: 12px/1.5 var(--mono); max-height: 220px; overflow: auto; white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+
+  .savebar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 4; display: flex; align-items: center; gap: 10px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 8px 8px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.18); max-width: calc(100vw - 32px); }
+  .toast { position: fixed; right: 16px; bottom: 16px; z-index: 5; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  .toast.ok { color: var(--ok); } .toast.bad { color: var(--bad); }
+  @media (max-width: 520px) { main { padding: 12px; } .savebar { bottom: 8px; } }
 </style>
 </head>
 <body>
-<header class="top">
-  <h1>automitti</h1><span class="dim" id="version"></span>
-  <span class="sp"></span>
-  <a href="/display" target="_blank" rel="noopener">Open clip display ↗</a>
-</header>
-<main>
-  <section class="grid">
-    <div class="card">
-      <h2><span class="dot" id="mDot"></span><span id="mLabel">Player</span></h2>
-      <div class="big" id="mNow">—</div>
-      <div class="mono"><span id="mEl">--:--</span> / <span id="mTrt">--:--</span> · <b id="mLeft">--:--</b> left</div>
-      <div class="bar"><span id="mBar"></span></div>
-      <div class="dim" style="margin-top:6px">Next: <span id="mNext">—</span></div>
-      <div class="row" style="margin-top:10px">
-        <button data-m="prev">◀◀</button><button data-m="play" class="primary">Play</button><button data-m="pause">Pause</button><button data-m="rewind">⟲</button><button data-m="next">▶▶</button>
-      </div>
-      <p class="help" id="mInfo"></p>
-    </div>
-    <div class="card">
-      <h2><span class="dot" id="sDot"></span>Switcher</h2>
-      <div class="big" id="sName">—</div>
-      <div id="sInfo" class="dim"></div>
-      <div class="row" style="margin-top:10px"><button data-s="cut">CUT</button><button data-s="auto">AUTO</button></div>
-    </div>
-    <div class="card">
-      <h2><span class="dot" id="aDot"></span>Emulated ATEM</h2>
-      <div id="aInfo" class="dim">—</div>
-    </div>
-    <div class="card">
-      <h2><span class="dot" id="nDot"></span>NDI tally</h2>
-      <div id="nInfo" class="dim">—</div>
-    </div>
-    <div class="card">
-      <h2><span class="dot" id="rDot"></span>Rules (OSC / HyperDeck)</h2>
-      <div id="rInfo" class="dim">—</div>
-    </div>
-    <div class="card">
-      <h2><span class="dot" id="oDot"></span>OSC feedback relay</h2>
-      <div id="oInfo" class="dim">—</div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Switcher inputs</h2>
-    <div class="inputs" id="inputs"></div>
-    <p class="help">Red = program, green = preview, tinted = the input the player feeds. Click an input to put it in preview.</p>
-  </section>
-
-  <form id="settings">
-    <fieldset>
-      <legend>Media player</legend>
-      <div class="fields">
-        <label>Player<select name="player.type" id="playerType"></select></label>
-      </div>
-      <p class="help" id="playerDesc"></p>
-      <div class="fields" id="playerFields" style="margin-top:10px"></div>
-      <p class="help" id="playerHelp"></p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Network</legend>
-      <div class="fields">
-        <label>Announce on address<select name="advertiseAddress" id="addrSel"><option value="">Every interface</option></select></label>
-      </div>
-      <p class="help">What Bonjour tells the player to connect to. Mitti uses the first address it is given, so on a machine with a VPN (ZeroTier, Tailscale) pick the show network's address here.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Feedback relay destinations</legend>
-      <table><thead><tr><th style="width:26%">Name</th><th>Address</th><th style="width:14%">Port</th><th style="width:8%">On</th><th style="width:6%"></th></tr></thead><tbody id="dests"></tbody></table>
-      <div class="row" style="margin-top:8px"><button type="button" id="addDest">Add destination</button></div>
-      <p class="help" id="relayHelp">Every feedback packet the player sends is re-sent, byte for byte, to each destination — for Mitti, Companion's Mitti module (port 51001), a Stream Deck, another machine.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Switcher</legend>
-      <div class="fields">
-        <label>Switcher<select name="switcher.type" id="switcherType"></select></label>
-        <label>The player's input (number or name)<input name="switcher.input" placeholder="e.g. 3 or HDMI 3"></label>
-      </div>
-      <p class="help" id="switcherDesc"></p>
-      <div class="fields" id="switcherFields" style="margin-top:10px"></div>
-      <p class="help" id="switcherHelp"></p>
-      <p class="help" id="driverProblems" hidden></p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Emulated ATEM (the player's ATEM integration)</legend>
-      <div class="fields">
-        <label class="check"><input type="checkbox" name="atem.enabled">Emulate an ATEM</label>
-        <label>Name shown in the player<input name="atem.name"></label>
-        <label class="check"><input type="checkbox" name="atem.advertise">Announce on Bonjour</label>
-      </div>
-      <p class="help">The player sees an ATEM whose inputs are the switcher's inputs and whose program/preview follow the real switcher. In Mitti, choose it under ATEM, pick the input it is on, and set its switch behaviour; Mitti's Pause-at-End CUT/AUTO fires a take on the real switcher. Uses UDP 9910 — do not run it on a machine that is also an ATEM's control computer with ATEM Software Control connected to a real one on the same port.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>NDI tally (the player's NDI integration)</legend>
-      <div class="fields">
-        <label class="check"><input type="checkbox" name="ndi.enabled">Send NDI tally to the player</label>
-        <label>The player's NDI source<input name="ndi.source" list="ndiSources" placeholder="MACHINE (Mitti)"></label>
-        <label>NDI library (optional)<input name="ndi.library" placeholder="auto"></label>
-      </div>
-      <datalist id="ndiSources"></datalist>
-      <div class="row" style="margin-top:8px"><button type="button" id="findNdi">Find NDI sources</button><span class="dim" id="ndiFound"></span></div>
-      <p class="help">automitti joins the player's NDI output as a metadata-only receiver (no video) and reports it on program while the player's switcher input is on air. In Mitti, set the integration to NDI.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Rules — automitti drives the player directly</legend>
-      <div class="fields">
-        <label class="check"><input type="checkbox" name="rules.enabled">Enable rules</label>
-        <label>Send over<select name="rules.via" id="ruleVia"></select></label>
-        <label>On program<select name="rules.onProgram"><option value="play">Play</option><option value="none">Do nothing</option></select></label>
-        <label>On preview<select name="rules.onPreview"><option value="none">Do nothing</option><option value="rewind">Rewind to the top</option></select></label>
-        <label>Taken off air<select name="rules.onLeave"><option value="none">Do nothing</option><option value="pause">Pause</option><option value="rewind">Stop and rewind</option><option value="next">Stop and load the next cue</option></select></label>
-        <label>Cue ends<select name="rules.onEnd"><option value="none">Do nothing</option><option value="cut">CUT</option><option value="auto">AUTO</option></select></label>
-        <label>End lead (seconds early)<input name="rules.lead" type="number" step="0.1" min="0" max="60"></label>
-      </div>
-      <p class="help">The same choices Mitti offers for an ATEM, run from here through the player driver — for when the player is not using its own ATEM or NDI integration. Don't enable rules while the player's own ATEM/NDI trigger points at automitti, or both will act on every take.</p>
-    </fieldset>
-
-    <fieldset>
-      <legend>Clip display</legend>
-      <div class="fields">
-        <label>Title<input name="display.title" placeholder="the player’s name"></label>
-        <label>Amber under (s)<input name="display.warnAt" type="number" min="0"></label>
-        <label>Red under (s)<input name="display.alertAt" type="number" min="0"></label>
-        <label class="check"><input type="checkbox" name="display.showFrames">Show frames</label>
-      </div>
-      <p class="help">Open <a href="/display" target="_blank" rel="noopener">/display</a> on any machine that can reach this one, at <span class="mono" id="displayUrl"></span>. Add <span class="mono">?frames</span> for frames on one screen only.</p>
-    </fieldset>
-
-    <div class="row"><button class="primary" type="submit">Save settings</button><span class="saved" id="saved"></span></div>
-  </form>
-
-  <section>
-    <h2 class="dim" style="font-size:12px;text-transform:uppercase;letter-spacing:.08em">Log</h2>
-    <div class="log" id="log"></div>
-  </section>
-</main>
+<div class="top">
+  <header><h1>automitti</h1><span class="dim" id="version"></span><span class="sp"></span><span class="conn" id="conn"></span></header>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+</div>
+<main id="view"><p class="dim">Connecting…</p></main>
+<section class="logwrap">
+  <details id="logBox"><summary>Log</summary><div class="log" id="log"></div></details>
+</section>
+<div class="savebar" id="savebar" hidden>
+  <span>Unsaved changes</span><button type="button" data-act="discard">Discard</button><button type="button" class="primary" data-act="save">Save</button>
+</div>
+<div class="toast" id="toast" hidden></div>
 <script>
 const $ = (id) => document.getElementById(id);
-let status = null;
-let formDirty = false;
-let destinations = [];
+let status = null;     // the last status the server pushed
+let draft = null;      // the settings being edited — saved whole with Save
+let dirty = false;
+let seenConfig = '';   // the server config the draft was taken from
+let route = parseRoute();
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmt = (sec) => {
@@ -214,98 +135,287 @@ const fmt = (sec) => {
   const p = (n) => String(n).padStart(2, '0');
   return w >= 3600 ? `${Math.floor(w / 3600)}:${p(Math.floor(w / 60) % 60)}:${p(w % 60)}` : `${p(Math.floor(w / 60))}:${p(w % 60)}`;
 };
-const dot = (el, cls) => { el.className = `dot ${cls || ''}`; };
+const dot = (el, cls) => { if (el) el.className = `dot ${cls || ''}`; };
+/* Only touch the DOM when something changed: rewriting a button under the pointer at 20 Hz eats clicks. */
+const setHtml = (el, html) => { if (el && el._h !== html) { el._h = html; el.innerHTML = html; } };
+const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+const F = (root, k) => root.querySelector(`[data-f="${k}"]`);
+const get = (o, path) => path.split('.').reduce((x, k) => x?.[k], o);
+const setIn = (o, path, v) => { const ks = path.split('.'); let x = o; ks.slice(0, -1).forEach((k) => { x[k] ??= {}; x = x[k]; }); x[ks.at(-1)] = v; };
 
-async function post(url, body) {
-  const r = await fetch(url, { method: url === '/api/config' ? 'PUT' : 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  const j = await r.json();
+async function api(method, url, body) {
+  const r = await fetch(url, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
 
-document.querySelectorAll('[data-m]').forEach((b) => b.onclick = () => post('/api/player', { action: b.dataset.m }));
-document.querySelectorAll('[data-s]').forEach((b) => b.onclick = () => post('/api/switcher', { action: b.dataset.s }).catch((e) => alert(e.message)));
-
-function render() {
-  if (!status) return;
-  const { player: m, switcher: s, atem: a, ndi: n, rules: r, config: c } = status;
-  $('mLabel').textContent = m.label;
-  $('version').textContent = `v${status.version}${status.stage ? ` (${status.stage})` : ''}`;
-  dot($('mDot'), m.error ? 'bad' : m.online ? 'ok' : 'bad');
-  $('mNow').textContent = m.current.name || (m.online ? '—' : 'not answering');
-  $('mEl').textContent = fmt(m.elapsedSec); $('mTrt').textContent = fmt(m.current.trtSec); $('mLeft').textContent = fmt(m.remainingSec);
-  $('mBar').style.width = `${((m.playhead || 0) * 100).toFixed(1)}%`;
-  $('mNext').textContent = m.next.name ? `${m.next.name}${m.next.trtSec != null ? ` (${fmt(m.next.trtSec)})` : ''}` : '—';
-  $('mInfo').textContent = m.error ? m.error : `${m.summary || (m.online ? 'online' : 'offline')} · ${m.playing ? 'playing' : 'paused'}`;
-
-  dot($('sDot'), s.status === 'online' ? 'ok' : s.status === 'off' ? '' : s.status === 'connecting' ? 'warn' : 'bad');
-  $('sName').textContent = s.type === 'none' ? 'None' : `${s.label}${s.device?.version ? ` ${s.device.version}` : ''}`;
-  const name = (id) => s.inputs.find((i) => i.id === id)?.name ?? (id == null ? '—' : `#${id}`);
-  $('sInfo').innerHTML = s.type === 'none' ? 'Not configured' : `${esc(s.status)}${s.error ? ` — ${esc(s.error)}` : ''}<br>PGM <b>${esc(name(s.program))}</b> · PVW <b>${esc(name(s.preview))}</b>${s.inTransition ? ' · <b>in transition</b>' : ''}<br>${esc(m.label)}'s input: ${s.playerInput == null ? '<i>not set</i>' : esc(name(s.playerInput))}`;
-  $('inputs').innerHTML = s.inputs.map((i) => {
-    const t = s.tally[i.id] || {};
-    return `<div class="inp ${t.program ? 'pgm' : t.preview ? 'pvw' : ''} ${i.id === s.playerInput ? 'player' : ''}" data-id="${i.id}" title="Put in preview"><b>${esc(i.name)}</b><span class="dim">${i.id}${i.id === s.playerInput ? ` · ${esc(m.label)}` : ''}</span></div>`;
-  }).join('') || '<span class="dim">No switcher connected.</span>';
-
-  dot($('aDot'), !a.enabled ? '' : a.error ? 'bad' : a.clients?.length ? 'ok' : 'warn');
-  $('aInfo').innerHTML = !a.enabled ? 'Off' : a.error ? esc(a.error) : `“${esc(c.atem.name)}” on UDP ${a.port ?? c.atem.port}<br>${a.clients?.length ? a.clients.map((x) => esc(x.address)).join(', ') + ' connected' : 'no client connected'}`;
-
-  dot($('nDot'), !n.enabled ? '' : n.error ? 'bad' : n.connections ? 'ok' : 'warn');
-  $('nInfo').innerHTML = !n.enabled ? 'Off' : n.error ? esc(n.error) : `${n.connectedTo ? esc(n.connectedTo) : `looking for “${esc(n.source)}”`}<br>${n.connections ? 'connected' : 'not connected'} · tally ${n.tally?.program ? '<b style="color:var(--pgm)">PROGRAM</b>' : n.tally?.preview ? '<b style="color:var(--pvw)">preview</b>' : 'off'}`;
-
-  dot($('rDot'), !c.rules.enabled ? '' : r.active ? 'ok' : 'warn');
-  $('rInfo').innerHTML = !c.rules.enabled ? 'Off' : !r.active ? 'Waiting for the switcher and the player\'s input' : `Active over ${esc(c.rules.via)}${r.last ? `<br>Last: ${esc(r.last.what)}` : ''}`;
-
-  const on = c.destinations.filter((d) => d.enabled);
-  dot($('oDot'), on.length ? 'ok' : '');
-  const relay = m.detail?.relay;
-  $('oInfo').innerHTML = !relay ? `${esc(m.label)} does not relay its feedback`
-    : `${on.length} destination${on.length === 1 ? '' : 's'} · listening on UDP ${relay.listenPort}<br>${relay.received} in · ${relay.relayed} out${relay.relayErrors ? ` · ${relay.relayErrors} errors` : ''}`;
-  $('displayUrl').textContent = `${location.origin}/display`;
+let toastTimer = null;
+function toast(msg, bad = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = `toast ${bad ? 'bad' : 'ok'}`;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, bad ? 6000 : 2500);
 }
 
-$('inputs').onclick = (e) => {
-  const el = e.target.closest('.inp');
-  if (el) post('/api/switcher', { action: 'preview', input: Number(el.dataset.id) }).catch((err) => alert(err.message));
-};
+/* ------------------------------------------------ lookups */
 
-/* ------------------------------------------------ settings form */
-
-const form = $('settings');
-const get = (o, path) => path.split('.').reduce((x, k) => x?.[k], o);
-const setIn = (o, path, v) => { const ks = path.split('.'); let x = o; ks.slice(0, -1).forEach((k) => { x[k] ??= {}; x = x[k]; }); x[ks.at(-1)] = v; };
-
-function fillAddresses() {
-  const sel = $('addrSel');
-  const want = status.config.advertiseAddress;
-  const list = status.addresses || [];
-  sel.innerHTML = '<option value="">Every interface</option>' + list.map((a) => `<option value="${esc(a.address)}">${esc(a.address)} (${esc(a.name)})</option>`).join('')
-    + (want && !list.some((a) => a.address === want) ? `<option value="${esc(want)}">${esc(want)} (not on this machine — announcing on every interface)</option>` : '');
-}
-
-/* ---- driver settings, drawn from each driver's own schema ---- */
-
+const live = (id) => status?.devices.find((d) => d.id === id);
+const saved = (id) => status?.config.devices.find((d) => d.id === id);
+const drafted = (id) => draft?.devices.find((d) => d.id === id);
 const kinds = { player: 'players', switcher: 'switchers' };
 const driverOf = (kind, id) => (status.drivers?.[kinds[kind]] || []).find((d) => d.id === id);
-
-function fillTypes(kind, c) {
-  const sel = $(`${kind}Type`);
-  const list = status.drivers?.[kinds[kind]] || [];
-  const none = kind === 'switcher' ? '<option value="none">None</option>' : '';
-  sel.innerHTML = none + list.map((d) => `<option value="${esc(d.id)}">${esc(d.label)}${d.source !== 'built-in' ? ' (added)' : ''}</option>`).join('');
-  sel.value = c[kind].type;
+const inputName = (id) => status.switcher.inputs.find((i) => i.id === id)?.name;
+const level = (left) => {
+  const d = status.config.display;
+  return left == null ? '' : left <= d.alertAt ? 'alert' : left <= d.warnAt ? 'warn' : '';
+};
+const isLocal = (h) => ['127.0.0.1', 'localhost', '::1'].includes(String(h).replace(/^::ffff:/, ''));
+/* The ATEM client that is this device's player, matched on its address. */
+function atemClientOf(d) {
+  const c = saved(d.id);
+  const host = c?.player.settings?.[c.player.type]?.host;
+  if (!host) return null;
+  return (status.atem.clients || []).find((x) => x.address === host || (isLocal(x.address) && isLocal(host))) || null;
 }
 
-/** One driver's fields, named `<kind>.settings.<id>.<key>` so saving is a plain setIn. */
-function drawDriver(kind, c) {
-  const id = $(`${kind}Type`).value;
-  const d = driverOf(kind, id);
-  $(`${kind}Desc`).textContent = d?.description || '';
-  $(`${kind}Help`).textContent = d?.help || '';
-  const saved = c[kind].settings?.[id] || {};
-  $(`${kind}Fields`).innerHTML = (d?.settings || []).map((f) => {
-    const name = `${kind}.settings.${id}.${f.key}`;
-    let v = saved[f.key] ?? f.default ?? '';
+/* ------------------------------------------------ routing */
+
+function parseRoute() {
+  const h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+  if (h.startsWith('device/')) return { view: 'device', id: h.slice(7) };
+  if (h === 'show') return { view: 'show' };
+  return { view: 'home' };
+}
+window.addEventListener('hashchange', () => { route = parseRoute(); drawView(); });
+
+function drawView() {
+  if (!status || !draft) return;
+  if (route.view === 'device' && !drafted(route.id) && !live(route.id)) { location.hash = '#/'; return; }
+  const v = $('view');
+  v.innerHTML = route.view === 'device' ? deviceView(route.id) : route.view === 'show' ? showView() : homeView();
+  v.querySelectorAll('[data-f]').forEach((el) => { delete el._h; });
+  cardsSig = ''; inputsSig = '';
+  markTabs();
+  update();
+}
+
+/* ------------------------------------------------ tabs */
+
+let tabsSig = '';
+function updateTabs() {
+  const sig = JSON.stringify(status.devices.map((d) => [d.id, d.name]));
+  if (sig !== tabsSig) {
+    tabsSig = sig;
+    $('tabs').innerHTML = `<a href="#/" data-tab="home">Home</a>`
+      + status.devices.map((d) => `<a href="#/device/${encodeURIComponent(d.id)}" data-tab="device:${esc(d.id)}" title="${esc(d.name)}"><span class="dot"></span><span class="tname">${esc(d.name)}</span><span class="chip" hidden></span></a>`).join('')
+      + `<button type="button" class="add" data-act="add-device" title="Add another Mitti">+ Add Mitti</button><span class="sp"></span>`
+      + `<a href="#/show" data-tab="show">Switcher &amp; show</a>`;
+    markTabs();
+  }
+  for (const d of status.devices) {
+    const tab = $('tabs').querySelector(`[data-tab="device:${CSS.escape(d.id)}"]`);
+    if (!tab) continue;
+    dot(tab.querySelector('.dot'), d.player.error || d.warnings.length ? 'bad' : d.player.online ? 'ok' : 'bad');
+    const chip = tab.querySelector('.chip');
+    const on = status.switcher.status === 'online' && d.input != null && (d.tally.program || d.tally.preview);
+    chip.hidden = !on;
+    chip.className = `chip ${d.tally.program ? 'pgm' : 'pvw'}`;
+    setText(chip, d.tally.program ? 'PGM' : 'PVW');
+  }
+}
+
+function markTabs() {
+  const key = route.view === 'device' ? `device:${route.id}` : route.view;
+  $('tabs').querySelectorAll('[data-tab]').forEach((a) => {
+    const on = a.dataset.tab === key;
+    a.classList.toggle('active', on);
+    a.setAttribute('aria-selected', on);
+  });
+}
+
+/* ------------------------------------------------ live cards */
+
+function deviceCard(id, { home = true } = {}) {
+  const enc = encodeURIComponent(id);
+  return `<article class="card dev" data-dev="${esc(id)}">
+    <h2><span class="dot" data-f="dot"></span>${home ? `<a href="#/device/${enc}" data-f="name"></a>` : '<span data-f="name"></span>'}<span class="sp"></span><span class="chip" data-f="tally" hidden></span></h2>
+    <div class="big" data-f="now">—</div>
+    <div class="clock"><span class="remain mono" data-f="left">--:--</span><span class="mono dim"><span data-f="el">--:--</span> / <span data-f="trt">--:--</span></span></div>
+    <div class="bar" data-f="bar"><span></span></div>
+    <div class="dim next">Next: <span data-f="next">—</span></div>
+    <div class="row transport">
+      <button type="button" data-act="player" data-action="prev" title="Previous cue">◀◀</button><button type="button" data-act="player" data-action="play" class="primary">Play</button><button type="button" data-act="player" data-action="pause">Pause</button><button type="button" data-act="player" data-action="rewind" title="Rewind">⟲</button><button type="button" data-act="player" data-action="next" title="Next cue">▶▶</button>
+    </div>
+    <div class="modes" data-f="modes"></div>
+    <p class="help" data-f="info"></p>
+    <a class="small" href="/display?device=${enc}" target="_blank" rel="noopener">Clip display ↗</a>
+  </article>`;
+}
+
+function updateDeviceCard(el, d) {
+  const m = d.player;
+  const c = saved(d.id);
+  setText(F(el, 'name'), d.name);
+  dot(F(el, 'dot'), m.error ? 'bad' : m.online ? 'ok' : 'bad');
+  setText(F(el, 'now'), m.current.name || (m.online ? '—' : 'not answering'));
+  const lv = m.online ? level(m.remainingSec) : '';
+  const left = F(el, 'left');
+  setText(left, fmt(m.remainingSec));
+  left.className = `remain mono ${lv}`;
+  setText(F(el, 'el'), fmt(m.elapsedSec));
+  setText(F(el, 'trt'), fmt(m.current.trtSec));
+  const bar = F(el, 'bar');
+  bar.className = `bar ${lv}`;
+  bar.firstElementChild.style.width = `${((m.playhead || 0) * 100).toFixed(1)}%`;
+  setText(F(el, 'next'), m.next.name ? `${m.next.name}${m.next.trtSec != null ? ` (${fmt(m.next.trtSec)})` : ''}` : '—');
+
+  const chip = F(el, 'tally');
+  const sw = status.switcher;
+  chip.hidden = !(sw.status === 'online' && d.input != null);
+  chip.className = `chip ${d.tally.program ? 'pgm' : d.tally.preview ? 'pvw' : ''}`;
+  setText(chip, d.tally.program ? 'On air' : d.tally.preview ? 'Preview' : 'Off air');
+
+  const modes = [];
+  if (!c?.input) modes.push('<span class="tag warn" title="Set it in this device\'s settings">No input set</span>');
+  else if (d.input == null) modes.push(`<span class="tag ${sw.status === 'online' ? 'warn' : ''}" title="${sw.status === 'online' ? 'Not one of the switcher\'s inputs' : 'The switcher is not connected'}">Input “${esc(c.input)}”</span>`);
+  else modes.push(`<span class="tag">Input ${d.input}${inputName(d.input) && inputName(d.input) !== String(d.input) ? ` · ${esc(inputName(d.input))}` : ''}</span>`);
+  if (atemClientOf(d)) modes.push('<span class="tag ok" title="Its ATEM integration is connected to the emulated ATEM">ATEM</span>');
+  if (c?.ndi.enabled) modes.push(`<span class="tag ${d.ndi.error ? 'bad' : d.ndi.connections ? 'ok' : 'warn'}" title="NDI tally">NDI</span>`);
+  if (c?.rules.enabled) modes.push(`<span class="tag ${d.rules.active ? 'ok' : 'warn'}" title="automitti's rules drive it">Rules</span>`);
+  setHtml(F(el, 'modes'), modes.join(''));
+
+  const info = [m.error, ...d.warnings].filter(Boolean);
+  setHtml(F(el, 'info'), info.length
+    ? `<span class="warnings">${info.map(esc).join('<br>')}</span>`
+    : esc(`${m.summary || (m.online ? 'online' : 'offline')} · ${m.playing ? 'playing' : 'paused'}`));
+}
+
+function switcherCard() {
+  return `<div class="card" data-card="switcher">
+    <h2><span class="dot" data-f="dot"></span>Switcher</h2>
+    <div class="big" data-f="name">—</div>
+    <div class="dim" data-f="info"></div>
+    <div class="row" style="margin-top:10px"><button type="button" data-act="switcher" data-action="cut">CUT</button><button type="button" data-act="switcher" data-action="auto">AUTO</button></div>
+  </div>`;
+}
+
+function updateSwitcherCard(el) {
+  const s = status.switcher;
+  dot(F(el, 'dot'), s.status === 'online' ? 'ok' : s.status === 'off' ? '' : s.status === 'connecting' ? 'warn' : 'bad');
+  setText(F(el, 'name'), s.type === 'none' ? 'None' : `${s.label}${s.device?.version ? ` ${s.device.version}` : ''}`);
+  const name = (id) => inputName(id) ?? (id == null ? '—' : `#${id}`);
+  setHtml(F(el, 'info'), s.type === 'none' ? 'Not configured — choose one under Switcher &amp; show'
+    : `${esc(s.status)}${s.error ? ` — ${esc(s.error)}` : ''}<br>PGM <b>${esc(name(s.program))}</b> · PVW <b>${esc(name(s.preview))}</b>${s.inTransition ? ' · <b>in transition</b>' : ''}`);
+}
+
+function atemCard() {
+  return `<div class="card" data-card="atem"><h2><span class="dot" data-f="dot"></span>Emulated ATEM</h2><div class="dim" data-f="info">—</div></div>`;
+}
+
+function updateAtemCard(el) {
+  const a = status.atem;
+  const c = status.config;
+  dot(F(el, 'dot'), !a.enabled ? '' : a.error ? 'bad' : a.clients?.length ? 'ok' : 'warn');
+  const who = (x) => {
+    const d = status.devices.find((dev) => atemClientOf(dev) === x);
+    return d ? `${esc(d.name)} (${esc(x.address)})` : esc(x.address);
+  };
+  setHtml(F(el, 'info'), !a.enabled ? 'Off' : a.error ? esc(a.error)
+    : `“${esc(c.atem.name)}” on UDP ${a.port ?? c.atem.port}<br>${a.clients?.length ? `${a.clients.map(who).join(', ')} connected` : 'no client connected'}`);
+}
+
+/* ------------------------------------------------ home */
+
+function homeView() {
+  return `<section class="devgrid" id="cards"></section>
+  <section class="grid">${switcherCard()}${atemCard()}</section>
+  <section class="card">
+    <h2>Switcher inputs</h2>
+    <div class="inputs" id="inputs"></div>
+    <p class="help">Red = program, green = preview, tinted = fed by a Mitti. Click an input to put it in preview.</p>
+  </section>`;
+}
+
+let cardsSig = '';
+let inputsSig = '';
+function updateHome() {
+  const cards = $('cards');
+  const sig = status.devices.map((d) => d.id).join('\n');
+  if (sig !== cardsSig) {
+    cardsSig = sig;
+    cards.innerHTML = status.devices.map((d) => deviceCard(d.id)).join('');
+  }
+  for (const d of status.devices) {
+    const el = cards.querySelector(`[data-dev="${CSS.escape(d.id)}"]`);
+    if (el) updateDeviceCard(el, d);
+  }
+  updateSwitcherCard($('view').querySelector('[data-card="switcher"]'));
+  updateAtemCard($('view').querySelector('[data-card="atem"]'));
+
+  const s = status.switcher;
+  const fedBy = (id) => status.devices.filter((d) => d.input === id).map((d) => d.name);
+  const grid = $('inputs');
+  const isig = JSON.stringify([s.inputs, status.devices.map((d) => [d.name, d.input])]);
+  if (isig !== inputsSig) {
+    inputsSig = isig;
+    grid.innerHTML = s.inputs.map((i) => {
+      const by = fedBy(i.id);
+      return `<div class="inp ${by.length ? 'player' : ''}" data-id="${i.id}" title="Put ${esc(i.name)} in preview"><b>${esc(i.name)}</b><span class="dim">${i.id}${by.length ? ` · ${esc(by.join(', '))}` : ''}</span></div>`;
+    }).join('') || '<span class="dim">No switcher connected.</span>';
+  }
+  grid.querySelectorAll('.inp').forEach((el) => {
+    const t = s.tally[el.dataset.id] || {};
+    el.classList.toggle('pgm', !!t.program);
+    el.classList.toggle('pvw', !t.program && !!t.preview);
+  });
+}
+
+/* ------------------------------------------------ one device */
+
+function deviceView(id) {
+  return `<section class="devtop">${deviceCard(id, { home: false })}<div class="side">
+    <div class="card" data-card="ndi"><h2><span class="dot" data-f="dot"></span>NDI tally</h2><div class="dim" data-f="info">—</div></div>
+    <div class="card" data-card="rules"><h2><span class="dot" data-f="dot"></span>Rules (OSC / HyperDeck)</h2><div class="dim" data-f="info">—</div></div>
+    <div class="card" data-card="relay"><h2><span class="dot" data-f="dot"></span>OSC feedback relay</h2><div class="dim" data-f="info">—</div></div>
+  </div></section>
+  <form class="settings" data-root="device" data-id="${esc(id)}" autocomplete="off">${deviceForm(id)}</form>`;
+}
+
+function updateDevice() {
+  const d = live(route.id);
+  if (!d) return;
+  const v = $('view');
+  updateDeviceCard(v.querySelector('.dev'), d);
+  const c = saved(d.id);
+
+  const n = d.ndi;
+  const ndi = v.querySelector('[data-card="ndi"]');
+  dot(F(ndi, 'dot'), !n.enabled ? '' : n.error ? 'bad' : n.connections ? 'ok' : 'warn');
+  setHtml(F(ndi, 'info'), !n.enabled ? 'Off' : n.error ? esc(n.error)
+    : `${n.connectedTo ? esc(n.connectedTo) : `looking for “${esc(n.source)}”`}<br>${n.connections ? 'connected' : 'not connected'} · tally ${n.tally?.program ? '<b style="color:var(--pgm)">PROGRAM</b>' : n.tally?.preview ? '<b style="color:var(--pvw)">preview</b>' : 'off'}`);
+
+  const r = d.rules;
+  const rules = v.querySelector('[data-card="rules"]');
+  dot(F(rules, 'dot'), !c?.rules.enabled ? '' : r.active ? 'ok' : 'warn');
+  setHtml(F(rules, 'info'), !c?.rules.enabled ? 'Off' : !r.active ? 'Waiting for the switcher and this Mitti\'s input'
+    : `Active over ${esc(c.rules.via)}${r.last ? `<br>Last: ${esc(r.last.what)}` : ''}`);
+
+  const relay = d.player.detail?.relay;
+  const on = (c?.destinations || []).filter((x) => x.enabled);
+  const card = v.querySelector('[data-card="relay"]');
+  dot(F(card, 'dot'), relay && on.length ? 'ok' : '');
+  setHtml(F(card, 'info'), !relay ? `${esc(d.player.label)} does not relay its feedback`
+    : `${on.length} destination${on.length === 1 ? '' : 's'} · listening on UDP ${relay.listenPort}<br>${relay.received} in · ${relay.relayed} out${relay.relayErrors ? ` · ${relay.relayErrors} errors` : ''}`);
+}
+
+/** A driver's own settings, drawn from its schema and named `<prefix>.<key>`. */
+function driverFields(d, values = {}, prefix) {
+  return (d?.settings || []).map((f) => {
+    const name = `${prefix}.${f.key}`;
+    let v = values?.[f.key] ?? f.default ?? '';
     if (Array.isArray(v)) v = v.join(',');
     const tip = f.help ? ` title="${esc(f.help)}"` : '';
     if (f.type === 'bool') return `<label class="check"${tip}><input type="checkbox" name="${name}" ${v ? 'checked' : ''}>${esc(f.label)}</label>`;
@@ -314,106 +424,296 @@ function drawDriver(kind, c) {
     const range = f.type === 'number' ? `${f.min != null ? ` min="${f.min}"` : ''}${f.max != null ? ` max="${f.max}"` : ''}` : '';
     return `<label${tip}>${esc(f.label)}${f.required ? ' *' : ''}<input type="${type}" name="${name}" data-type="${f.type}" value="${esc(v)}" placeholder="${esc(f.placeholder || '')}"${range}${type === 'password' ? ' autocomplete="off"' : ''}></label>`;
   }).join('');
-  if (kind === 'player') {
-    const via = $('ruleVia');
-    via.innerHTML = (d?.via || []).map((o) => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('') || '<option value="">—</option>';
-    via.value = c.rules.via;
-    if (via.selectedIndex < 0) via.selectedIndex = 0;
-  }
 }
-$('playerType').onchange = () => drawDriver('player', status.config);
-$('switcherType').onchange = () => drawDriver('switcher', status.config);
 
-function showProblems() {
+const options = (list, value) => list.map((o) => `<option value="${esc(o.value)}" ${o.value === value ? 'selected' : ''}>${esc(o.label)}</option>`).join('');
+
+function deviceForm(id) {
+  const c = drafted(id);
+  if (!c) return '';
+  const type = c.player.type;
+  const pd = driverOf('player', type);
+  const players = (status.drivers?.players || []).map((d) => ({ value: d.id, label: `${d.label}${d.source !== 'built-in' ? ' (added)' : ''}` }));
+  if (!pd) players.push({ value: type, label: `${type} (not installed)` });
+  const port = live(id)?.player.detail?.relay?.listenPort;
+  const advertised = c.player.settings?.[type]?.advertise ?? pd?.settings.find((f) => f.key === 'advertise')?.default;
+  const via = pd?.via?.length ? pd.via : [{ value: '', label: '—' }];
+  const ints = pd?.integrations || [];
+  const display = `/display?device=${encodeURIComponent(id)}`;
+  return `
+  <fieldset>
+    <legend>This Mitti</legend>
+    <div class="fields">
+      <label>Name (its tab and clip display title)<input name="name" value="${esc(c.name)}"></label>
+      <label>Player<select name="player.type">${options(players, type)}</select></label>
+      <label>Its switcher input (number or name)<input name="input" value="${esc(c.input)}" placeholder="e.g. 3 or HDMI 3"></label>
+    </div>
+    <p class="help">${esc(pd?.description || '')}</p>
+    <div class="fields" style="margin-top:10px">${driverFields(pd, c.player.settings?.[type], `player.settings.${type}`)}</div>
+    <p class="help">${esc(pd?.help || '')}</p>
+    ${port && pd?.relay ? `<p class="help">Feedback is received on UDP <b>${port}</b>${type === 'mitti' && advertised ? `, announced as <b>automitti-${port}</b> in Mitti's <i>Feedback To</i> list` : ''}. Each Mitti needs its own port.</p>` : ''}
+    ${ints.includes('atem') && status.config.atem.enabled ? `<p class="help">ATEM integration: in this Mitti choose “${esc(status.config.atem.name)}” and pick input <b>${esc(c.input || '?')}</b>. Every Mitti can use the one emulated ATEM.</p>` : ''}
+  </fieldset>
+
+  ${pd?.relay ? `<fieldset>
+    <legend>Feedback relay destinations</legend>
+    <table><thead><tr><th style="width:26%">Name</th><th>Address</th><th style="width:14%">Port</th><th style="width:8%">On</th><th style="width:6%"></th></tr></thead>
+    <tbody>${c.destinations.map((d, i) => `<tr>
+      <td><input name="destinations.${i}.name" value="${esc(d.name)}"></td>
+      <td><input name="destinations.${i}.host" value="${esc(d.host)}" placeholder="192.168.0.20"></td>
+      <td><input name="destinations.${i}.port" type="number" min="1" max="65535" value="${d.port}"></td>
+      <td><input name="destinations.${i}.enabled" type="checkbox" ${d.enabled ? 'checked' : ''}></td>
+      <td><button type="button" class="danger" data-act="del-dest" data-i="${i}" title="Remove">✕</button></td></tr>`).join('')
+      || '<tr><td colspan="5" class="dim">None yet — the feedback only reaches automitti.</td></tr>'}</tbody></table>
+    <div class="row" style="margin-top:8px"><button type="button" data-act="add-dest">Add destination</button></div>
+    <p class="help">Every feedback packet this Mitti sends is re-sent, byte for byte, to each destination — a Companion Mitti instance (each listens on its own port: 51001, 51002…), a Stream Deck, another machine.</p>
+  </fieldset>` : ''}
+
+  ${ints.includes('ndi') ? `<fieldset>
+    <legend>NDI tally (the player's NDI integration)</legend>
+    <div class="fields">
+      <label class="check"><input type="checkbox" name="ndi.enabled" ${c.ndi.enabled ? 'checked' : ''}>Send NDI tally to this Mitti</label>
+      <label>Its NDI source<input name="ndi.source" list="ndiSources" value="${esc(c.ndi.source)}" placeholder="MACHINE (Mitti)"></label>
+    </div>
+    <datalist id="ndiSources"></datalist>
+    <div class="row" style="margin-top:8px"><button type="button" data-act="find-ndi">Find NDI sources</button><span class="dim" data-f="ndiFound"></span></div>
+    <p class="help">automitti joins this Mitti's NDI output as a metadata-only receiver (no video) and reports it on program while its switcher input is on air. In Mitti, set the integration to NDI.</p>
+  </fieldset>` : ''}
+
+  <fieldset>
+    <legend>Rules — automitti drives this Mitti directly</legend>
+    <div class="fields">
+      <label class="check"><input type="checkbox" name="rules.enabled" ${c.rules.enabled ? 'checked' : ''}>Enable rules</label>
+      <label>Send over<select name="rules.via">${options(via, c.rules.via)}</select></label>
+      <label>On program<select name="rules.onProgram">${options([{ value: 'play', label: 'Play' }, { value: 'none', label: 'Do nothing' }], c.rules.onProgram)}</select></label>
+      <label>On preview<select name="rules.onPreview">${options([{ value: 'none', label: 'Do nothing' }, { value: 'rewind', label: 'Rewind to the top' }], c.rules.onPreview)}</select></label>
+      <label>Taken off air<select name="rules.onLeave">${options([{ value: 'none', label: 'Do nothing' }, { value: 'pause', label: 'Pause' }, { value: 'rewind', label: 'Stop and rewind' }, { value: 'next', label: 'Stop and load the next cue' }], c.rules.onLeave)}</select></label>
+      <label>Cue ends<select name="rules.onEnd">${options([{ value: 'none', label: 'Do nothing' }, { value: 'cut', label: 'CUT' }, { value: 'auto', label: 'AUTO' }], c.rules.onEnd)}</select></label>
+      <label>End lead (seconds early)<input name="rules.lead" type="number" step="0.1" min="0" max="60" value="${c.rules.lead}"></label>
+    </div>
+    <p class="help">The same choices Mitti offers for an ATEM, run from here — for when this Mitti is not using its own ATEM or NDI integration. Don't enable rules while its own ATEM/NDI trigger points at automitti, or both will act on every take.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Clip display</legend>
+    <p class="help" style="margin:0">Open <a href="${display}" target="_blank" rel="noopener">${display}</a> on any machine that can reach this one, at <span class="mono">${esc(location.origin)}${display}</span>. Add <span class="mono">&amp;frames</span> for frames on one screen only. The colour thresholds are under Switcher &amp; show.</p>
+  </fieldset>
+
+  ${draft.devices.length > 1 ? `<div class="row"><button type="button" class="danger" data-act="remove-device">Remove ${esc(c.name)}…</button></div>` : ''}`;
+}
+
+/* ------------------------------------------------ switcher & show */
+
+function showView() {
+  return `<section class="grid">${switcherCard()}${atemCard()}</section>
+  <form class="settings" data-root="show" autocomplete="off">${showForm()}</form>`;
+}
+
+function updateShow() {
+  updateSwitcherCard($('view').querySelector('[data-card="switcher"]'));
+  updateAtemCard($('view').querySelector('[data-card="atem"]'));
+}
+
+function showForm() {
+  const c = draft;
+  const type = c.switcher.type;
+  const sd = driverOf('switcher', type);
+  const switchers = [{ value: 'none', label: 'None' }, ...(status.drivers?.switchers || []).map((d) => ({ value: d.id, label: `${d.label}${d.source !== 'built-in' ? ' (added)' : ''}` }))];
   const bad = status.drivers?.problems || [];
-  const el = $('driverProblems');
-  el.hidden = !bad.length;
-  el.textContent = bad.map((p) => `Driver not loaded — ${p.path}: ${p.problems.join('; ')}`).join('\n');
+  const addrs = status.addresses || [];
+  const want = c.advertiseAddress;
+  const addrOptions = [{ value: '', label: 'Every interface' }, ...addrs.map((a) => ({ value: a.address, label: `${a.address} (${a.name})` })),
+    ...(want && !addrs.some((a) => a.address === want) ? [{ value: want, label: `${want} (not on this machine — announcing on every interface)` }] : [])];
+  return `
+  <fieldset>
+    <legend>Switcher — every Mitti's input is on it</legend>
+    <div class="fields"><label>Switcher<select name="switcher.type">${options(switchers, type)}</select></label></div>
+    <p class="help">${esc(sd?.description || '')}</p>
+    <div class="fields" style="margin-top:10px">${driverFields(sd, c.switcher.settings?.[type], `switcher.settings.${type}`)}</div>
+    <p class="help">${esc(sd?.help || '')}</p>
+    ${bad.length ? `<p class="help warnings">${bad.map((p) => `Driver not loaded — ${esc(p.path)}: ${esc(p.problems.join('; '))}`).join('<br>')}</p>` : ''}
+  </fieldset>
+
+  <fieldset>
+    <legend>Emulated ATEM (the players' ATEM integration)</legend>
+    <div class="fields">
+      <label class="check"><input type="checkbox" name="atem.enabled" ${c.atem.enabled ? 'checked' : ''}>Emulate an ATEM</label>
+      <label>Name shown in Mitti<input name="atem.name" value="${esc(c.atem.name)}"></label>
+      <label class="check"><input type="checkbox" name="atem.advertise" ${c.atem.advertise ? 'checked' : ''}>Announce on Bonjour</label>
+    </div>
+    <p class="help">Each Mitti sees an ATEM whose inputs are the switcher's inputs and whose program/preview follow the real switcher. Every Mitti can connect to it at once, as to a real ATEM: in each, choose it under ATEM, pick the input that Mitti is on, and set its switch behaviour. Mitti's Pause-at-End CUT/AUTO fires a take on the real switcher. Uses UDP 9910 — do not run it on a machine where ATEM Software Control is connected to a real ATEM.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Network</legend>
+    <div class="fields">
+      <label>Announce on address<select name="advertiseAddress">${options(addrOptions, want)}</select></label>
+      <label>NDI library (optional)<input name="ndi.library" value="${esc(c.ndi.library)}" placeholder="auto"></label>
+    </div>
+    <p class="help">What Bonjour tells each Mitti to connect to. Mitti uses the first address it is given, so on a machine with a VPN (ZeroTier, Tailscale) pick the show network's address here. The NDI library is found by itself when NDI Tools is installed; it is loaded once, so a change takes effect at the next start.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Clip displays</legend>
+    <div class="fields">
+      <label>Amber under (s)<input name="display.warnAt" type="number" min="0" value="${c.display.warnAt}"></label>
+      <label>Red under (s)<input name="display.alertAt" type="number" min="0" value="${c.display.alertAt}"></label>
+      <label class="check"><input type="checkbox" name="display.showFrames" ${c.display.showFrames ? 'checked' : ''}>Show frames</label>
+    </div>
+    <p class="help">One clip display per Mitti, titled with its name: ${status.devices.map((d) => `<a href="/display?device=${encodeURIComponent(d.id)}" target="_blank" rel="noopener">${esc(d.name)}</a>`).join(' · ')}.</p>
+  </fieldset>`;
 }
 
-function fillForm(c) {
-  fillAddresses();
-  fillTypes('player', c);
-  fillTypes('switcher', c);
-  drawDriver('player', c);
-  drawDriver('switcher', c);
-  showProblems();
-  for (const el of form.elements) {
-    if (el.name?.includes('.settings.')) continue; // drawn by drawDriver
-    if (!el.name || el.closest('#dests')) continue;
-    const v = get(c, el.name);
-    if (el.type === 'checkbox') el.checked = !!v;
-    else el.value = Array.isArray(v) ? v.join(',') : (v ?? '');
-  }
-  destinations = c.destinations.map((d) => ({ ...d }));
-  renderDests();
-  formDirty = false;
+/* ------------------------------------------------ editing */
+
+function rootOf(el) {
+  const form = el.closest('[data-root]');
+  if (!form || !draft) return null;
+  return form.dataset.root === 'show' ? draft : drafted(form.dataset.id);
 }
 
-function renderDests() {
-  $('dests').innerHTML = destinations.map((d, i) => `<tr data-i="${i}">
-    <td><input data-k="name" value="${esc(d.name)}"></td>
-    <td><input data-k="host" value="${esc(d.host)}" placeholder="192.168.0.20"></td>
-    <td><input data-k="port" type="number" value="${d.port}"></td>
-    <td><input data-k="enabled" type="checkbox" ${d.enabled ? 'checked' : ''}></td>
-    <td><button type="button" class="danger" data-del="${i}" title="Remove">✕</button></td></tr>`).join('')
-    || '<tr><td colspan="5" class="dim">None yet — the feedback only reaches automitti.</td></tr>';
+function setDirty(on) {
+  dirty = on;
+  $('savebar').hidden = !on;
 }
-$('dests').oninput = (e) => {
-  const tr = e.target.closest('tr'); if (!tr) return;
-  const d = destinations[tr.dataset.i]; const k = e.target.dataset.k;
-  d[k] = e.target.type === 'checkbox' ? e.target.checked : e.target.type === 'number' ? Number(e.target.value) : e.target.value;
-  formDirty = true;
-};
-$('dests').onclick = (e) => { if (e.target.dataset.del != null) { destinations.splice(Number(e.target.dataset.del), 1); renderDests(); formDirty = true; } };
-$('addDest').onclick = () => { destinations.push({ name: `Destination ${destinations.length + 1}`, host: '', port: 51001, enabled: true }); renderDests(); formDirty = true; };
 
-form.addEventListener('input', (e) => { if (!e.target.closest('#dests')) formDirty = true; });
+function redrawForm() {
+  const form = $('view').querySelector('form.settings');
+  if (!form) return;
+  form.innerHTML = form.dataset.root === 'show' ? showForm() : deviceForm(form.dataset.id);
+  form.querySelectorAll('[data-f]').forEach((el) => { delete el._h; });
+}
 
-form.onsubmit = async (e) => {
-  e.preventDefault();
-  const c = structuredClone(status.config);
-  for (const el of form.elements) {
-    if (!el.name || el.closest('#dests')) continue;
-    let v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
-    if (el.dataset.type === 'list') v = el.value.split(',').map((x) => x.trim()).filter(Boolean);
-    setIn(c, el.name, v);
-  }
-  c.destinations = destinations;
+/** Take the server's settings as the draft — after a save, a discard, or a change made elsewhere. */
+function takeConfig(c) {
+  draft = structuredClone(c);
+  seenConfig = JSON.stringify(c);
+  setDirty(false);
+  redrawForm();
+}
+
+function onField(e) {
+  const el = e.target;
+  if (!el.name) return;
+  const root = rootOf(el);
+  if (!root) return;
+  let v = el.type === 'checkbox' ? el.checked : el.type === 'number' ? (el.value === '' ? null : Number(el.value)) : el.value;
+  if (el.dataset.type === 'list') v = el.value.split(',').map((x) => x.trim()).filter(Boolean);
+  setIn(root, el.name, v);
+  setDirty(true);
+  /* Another driver has other settings. */
+  if (e.type === 'change' && (el.name === 'player.type' || el.name === 'switcher.type')) redrawForm();
+}
+$('view').addEventListener('input', onField);
+$('view').addEventListener('change', onField);
+$('view').addEventListener('submit', (e) => { e.preventDefault(); save(); });
+
+async function save() {
   try {
-    const saved = await post('/api/config', c);
-    status.config = saved;
-    fillForm(saved);
-    $('saved').textContent = 'Saved.';
-    setTimeout(() => { $('saved').textContent = ''; }, 2500);
-  } catch (err) { alert(`Could not save: ${err.message}`); }
-};
+    takeConfig(await api('PUT', '/api/config', draft));
+    toast('Saved.');
+  } catch (err) { toast(`Could not save: ${err.message}`, true); }
+}
 
-$('findNdi').onclick = async () => {
-  $('ndiFound').textContent = 'Looking…';
-  const r = await (await fetch('/api/ndi/sources')).json();
-  $('ndiSources').innerHTML = (r.sources || []).map((s) => `<option value="${esc(s.name)}">`).join('');
-  $('ndiFound').textContent = r.error ? r.error : `${r.sources.length} found${r.sources.length ? `: ${r.sources.map((s) => s.name).join(', ')}` : ''}`;
-};
+async function addDevice() {
+  try {
+    const { device, config } = await api('POST', '/api/devices', {});
+    if (dirty) { draft.devices.push(structuredClone(device)); seenConfig = JSON.stringify(config); } else takeConfig(config);
+    location.hash = `#/device/${encodeURIComponent(device.id)}`;
+    toast(`${device.name} added — set its address and input, then Save.`);
+  } catch (err) { toast(`Could not add: ${err.message}`, true); }
+}
+
+async function removeDevice(id) {
+  const c = drafted(id);
+  if (!confirm(`Remove “${c?.name || id}”? Its settings go with it.`)) return;
+  try {
+    const { config } = await api('DELETE', `/api/devices/${encodeURIComponent(id)}`);
+    if (dirty) { draft.devices = draft.devices.filter((d) => d.id !== id); seenConfig = JSON.stringify(config); } else takeConfig(config);
+    location.hash = '#/';
+  } catch (err) { toast(`Could not remove: ${err.message}`, true); }
+}
+
+async function findNdi(form) {
+  const found = F(form, 'ndiFound');
+  setText(found, 'Looking…');
+  try {
+    const r = await api('GET', `/api/ndi/sources?device=${encodeURIComponent(form.dataset.id)}`);
+    form.querySelector('#ndiSources').innerHTML = (r.sources || []).map((s) => `<option value="${esc(s.name)}">`).join('');
+    setText(found, r.error ? r.error : `${r.sources.length} found${r.sources.length ? `: ${r.sources.map((s) => s.name).join(', ')}` : ''}`);
+  } catch (err) { setText(found, err.message); }
+}
+
+document.addEventListener('click', (e) => {
+  const inp = e.target.closest('.inp[data-id]');
+  if (inp) {
+    api('POST', '/api/switcher', { action: 'preview', input: Number(inp.dataset.id) }).catch((err) => toast(err.message, true));
+    return;
+  }
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const devId = b.closest('[data-dev]')?.dataset.dev ?? b.closest('[data-root="device"]')?.dataset.id;
+  switch (b.dataset.act) {
+    case 'player': api('POST', '/api/player', { device: devId, action: b.dataset.action }).catch((err) => toast(err.message, true)); break;
+    case 'switcher': api('POST', '/api/switcher', { action: b.dataset.action }).catch((err) => toast(err.message, true)); break;
+    case 'add-device': addDevice(); break;
+    case 'remove-device': removeDevice(devId); break;
+    case 'save': save(); break;
+    case 'discard': takeConfig(status.config); break;
+    case 'find-ndi': findNdi(b.closest('form')); break;
+    case 'add-dest': {
+      const c = drafted(devId);
+      c.destinations.push({ name: `Destination ${c.destinations.length + 1}`, host: '', port: 51001, enabled: true });
+      setDirty(true);
+      redrawForm();
+      break;
+    }
+    case 'del-dest':
+      drafted(devId).destinations.splice(Number(b.dataset.i), 1);
+      setDirty(true);
+      redrawForm();
+      break;
+    default:
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (dirty) save(); }
+});
+window.addEventListener('beforeunload', (e) => { if (dirty) e.preventDefault(); });
 
 /* ------------------------------------------------ live */
 
+function update() {
+  if (!status) return;
+  setText($('version'), `v${status.version}${status.stage ? ` (${status.stage})` : ''}`);
+  updateTabs();
+  if (!$('view').firstElementChild?.matches('section, form')) return;
+  if (route.view === 'home') updateHome();
+  else if (route.view === 'device') updateDevice();
+  else updateShow();
+}
+
 function connect() {
   const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  ws.onopen = () => setText($('conn'), '');
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
     if (msg.type === 'status') {
       const first = !status;
       status = msg.status;
-      if (first || !formDirty) fillForm(status.config);
-      render();
+      const cj = JSON.stringify(status.config);
+      if (!draft || (!dirty && cj !== seenConfig)) takeConfig(status.config);
+      /* A device removed elsewhere takes its tab with it. */
+      if (route.view === 'device' && !live(route.id) && !drafted(route.id)) { location.hash = '#/'; return; }
+      if (first) drawView(); else update();
     } else if (msg.type === 'log') {
       const log = $('log');
       log.textContent += `${msg.line}\n`;
       log.scrollTop = log.scrollHeight;
     }
   };
-  ws.onclose = () => setTimeout(connect, 1000);
+  ws.onclose = () => { setText($('conn'), 'reconnecting…'); setTimeout(connect, 1000); };
 }
 fetch('/api/log').then((r) => r.json()).then((lines) => { $('log').textContent = lines.join('\n') + (lines.length ? '\n' : ''); });
 connect();

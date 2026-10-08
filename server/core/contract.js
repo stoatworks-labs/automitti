@@ -20,10 +20,17 @@
  * A settings field:
  *
  *   { key, label, type: 'text'|'password'|'number'|'bool'|'select'|'list',
- *     default?, placeholder?, help?, required?, min?, max?, options?: [{value,label}] }
+ *     default?, placeholder?, help?, required?, min?, max?, options?: [{value,label}],
+ *     unique? }
  *
  * `list` is a comma-separated list of strings. The host normalises what a
  * driver receives against this schema, so a driver can trust its settings.
+ *
+ * A player driver runs once per DEVICE, several at a time, so it must keep no
+ * state at module level. `unique: true` marks a setting each of its devices
+ * needs its own value of — a port it listens on. A new device gets one past
+ * the highest its devices use (the default for the first), and two devices
+ * sharing one are flagged. Empty and 0 are exempt.
  */
 
 export const API_VERSION = 1;

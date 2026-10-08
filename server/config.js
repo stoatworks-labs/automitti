@@ -48,9 +48,12 @@ const settingsMap = (v) => {
 };
 
 /**
- * v0.1.0 kept Mitti's settings at the top level (`mitti`) and one switcher's
- * settings flat inside `switcher`, with the player's input as `mittiInput`.
- * Carried across once, on read.
+ * Older files, carried across once, on read:
+ *
+ *  - v0.1.0 kept Mitti's settings at the top level (`mitti`) and one switcher's
+ *    settings flat inside `switcher`, with the player's input as `mittiInput`.
+ *  - v0.1.x had ONE player, with its relay list, input, NDI tally, rules and
+ *    display title at the top level. They become the first device.
  */
 function migrate(r) {
   const out = { ...r };
@@ -65,41 +68,101 @@ function migrate(r) {
     for (const k of Object.keys(flat)) if (flat[k] === undefined || flat[k] === '') delete flat[k];
     out.switcher = { type, input: mittiInput ?? '', settings: type !== 'none' ? { [type]: flat } : {} };
   }
+  const single = ['player', 'destinations', 'ndi', 'rules'];
+  if (!Array.isArray(out.devices) && (single.some((k) => k in out) || (out.switcher && 'input' in out.switcher))) {
+    out.devices = [{
+      id: 'mitti',
+      name: out.display?.title,
+      player: out.player,
+      destinations: out.destinations,
+      ndi: out.ndi,
+      rules: out.rules,
+      input: out.switcher?.input,
+    }];
+    for (const k of single) delete out[k];
+    /* Which NDI library to load is the machine's, not a device's. */
+    if (r.ndi?.library) out.ndi = { library: r.ndi.library };
+    if (out.switcher) { out.switcher = { ...out.switcher }; delete out.switcher.input; }
+    if (out.display) { out.display = { ...out.display }; delete out.display.title; }
+  }
   return out;
+}
+
+/* A switcher input is set as a number or a name; JSON may carry either. */
+const inputSetting = (v) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : str(v));
+
+const destinationList = (v) => (Array.isArray(v) ? v : [])
+  .filter((d) => d && typeof d === 'object')
+  .map((d, i) => ({
+    id: str(d.id) || `dest-${i + 1}`,
+    name: str(d.name) || `Destination ${i + 1}`,
+    host: str(d.host),
+    port: int(d.port, 1, 65535, 51001),
+    enabled: bool(d.enabled, true),
+  }));
+
+/**
+ * One media player and everything that follows it: the switcher input it
+ * feeds, where its feedback is relayed, the NDI tally sent to it and the rules
+ * that drive it. Several run at once, all on the one switcher.
+ */
+function normaliseDevice(d, i) {
+  const player = d.player || {};
+  const ndi = d.ndi || {};
+  const rules = d.rules || {};
+  return {
+    id: ID.test(str(d.id)) ? str(d.id) : (i ? `mitti-${i + 1}` : 'mitti'),
+    name: str(d.name) || (i ? `Mitti ${i + 1}` : 'Mitti'),
+    player: {
+      type: driverId(player.type, 'mitti'),
+      settings: settingsMap(player.settings),
+    },
+    /* Which switcher input it feeds — what its NDI tally and rules follow. */
+    input: inputSetting(d.input),
+    /* Where its feedback is re-sent, for players that relay. */
+    destinations: destinationList(d.destinations),
+    ndi: {
+      enabled: bool(ndi.enabled, false),
+      source: str(ndi.source),
+    },
+    rules: {
+      enabled: bool(rules.enabled, false),
+      via: str(rules.via) || 'osc',
+      onProgram: oneOf(rules.onProgram, ON_PROGRAM, 'play'),
+      onPreview: oneOf(rules.onPreview, ON_PREVIEW, 'none'),
+      onLeave: oneOf(rules.onLeave, ON_LEAVE, 'none'),
+      onEnd: oneOf(rules.onEnd, ON_END, 'none'),
+      lead: Math.min(60, Math.max(0, Number(rules.lead) || 0)),
+    },
+  };
+}
+
+/* Every device, ids made unique. There is always at least one. */
+function deviceList(v) {
+  const list = (Array.isArray(v) ? v : []).filter((d) => d && typeof d === 'object');
+  const seen = new Set();
+  return (list.length ? list : [{}]).map((d, i) => {
+    const dev = normaliseDevice(d, i);
+    let { id } = dev;
+    for (let n = 2; seen.has(id); n += 1) id = `${dev.id.slice(0, 28)}-${n}`;
+    seen.add(id);
+    return { ...dev, id };
+  });
 }
 
 export function normalise(raw = {}) {
   const r = migrate(raw && typeof raw === 'object' ? raw : {});
-  const player = r.player || {};
   const sw = r.switcher || {};
   const atem = r.atem || {};
-  const ndi = r.ndi || {};
-  const rules = r.rules || {};
   const display = r.display || {};
-  const destinations = (Array.isArray(r.destinations) ? r.destinations : [])
-    .filter((d) => d && typeof d === 'object')
-    .map((d, i) => ({
-      id: str(d.id) || `dest-${i + 1}`,
-      name: str(d.name) || `Destination ${i + 1}`,
-      host: str(d.host),
-      port: int(d.port, 1, 65535, 51001),
-      enabled: bool(d.enabled, true),
-    }));
   return {
     httpPort: int(r.httpPort, 1, 65535, 8710),
     httpBind: str(r.httpBind) || '0.0.0.0',
     /* The one IPv4 address Bonjour announces (empty = every interface). */
     advertiseAddress: /^\d{1,3}(\.\d{1,3}){3}$/.test(str(r.advertiseAddress)) ? str(r.advertiseAddress) : '',
-    player: {
-      type: driverId(player.type, 'mitti'),
-      settings: settingsMap(player.settings),
-    },
-    /* Where the player's feedback is re-sent, for players that relay. */
-    destinations,
+    /* The one switcher every device's input is on. */
     switcher: {
       type: driverId(sw.type, 'none'),
-      /* Which switcher input the player feeds — what NDI tally and the rules follow. */
-      input: str(sw.input),
       settings: settingsMap(sw.settings),
     },
     atem: {
@@ -113,26 +176,18 @@ export function normalise(raw = {}) {
          became a different ATEM to Mitti. ConfigStore fills it in once. */
       uniqueId: /^[0-9a-f]{32}$/.test(str(atem.uniqueId)) ? str(atem.uniqueId) : '',
     },
+    /* The NDI library every device's tally loads (empty = look in the usual places).
+       It is loaded once per process. */
     ndi: {
-      enabled: bool(ndi.enabled, false),
-      source: str(ndi.source),
-      library: str(ndi.library),
+      library: str(r.ndi?.library),
     },
-    rules: {
-      enabled: bool(rules.enabled, false),
-      via: str(rules.via) || 'osc',
-      onProgram: oneOf(rules.onProgram, ON_PROGRAM, 'play'),
-      onPreview: oneOf(rules.onPreview, ON_PREVIEW, 'none'),
-      onLeave: oneOf(rules.onLeave, ON_LEAVE, 'none'),
-      onEnd: oneOf(rules.onEnd, ON_END, 'none'),
-      lead: Math.min(60, Math.max(0, Number(rules.lead) || 0)),
-    },
+    /* Shared by every device's clip display, each titled with its device's name. */
     display: {
-      title: str(display.title),
       showFrames: bool(display.showFrames, false),
       warnAt: Math.max(0, Number(display.warnAt ?? 30) || 0),
       alertAt: Math.max(0, Number(display.alertAt ?? 10) || 0),
     },
+    devices: deviceList(r.devices),
   };
 }
 

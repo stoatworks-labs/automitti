@@ -112,11 +112,16 @@ function frame() {
   requestAnimationFrame(frame);
   const st = $('state');
   if (!status) { st.className = 'chip offline'; st.lastChild.textContent = 'no server'; return; }
-  const m = status.player;
+  /* ?device=<id or name> picks the Mitti; without it, the first one. */
+  const want = params.get('device');
+  const dev = !want ? status.devices[0]
+    : status.devices.find((x) => x.id === want) || status.devices.find((x) => x.name.toLowerCase() === want.toLowerCase());
+  if (!dev) { st.className = 'chip offline'; st.lastChild.textContent = `no device “${want}”`; return; }
+  const m = dev.player;
   const d = status.config.display;
   const frames = showFrames || d.showFrames;
-  $('title').textContent = d.title || m.label || 'Player';
-  document.title = d.title || `${m.label || 'Player'} clock`;
+  $('title').textContent = dev.name;
+  document.title = `${dev.name} clock`;
 
   /* Between feedback packets, run the clock locally while playing. */
   /* Seconds since Mitti last reported, on the server's clock then ours; capped
@@ -132,12 +137,12 @@ function frame() {
   }
 
   st.className = `chip ${!m.online ? 'offline' : m.playing ? 'playing' : 'paused'}`;
-  st.lastChild.textContent = !m.online ? `${m.label} offline` : m.playing ? 'Playing' : 'Paused';
+  st.lastChild.textContent = !m.online ? `${dev.name} offline` : m.playing ? 'Playing' : 'Paused';
 
   const sw = status.switcher;
   const tally = $('tally');
-  if (sw && sw.status === 'online' && sw.playerInput != null) {
-    const t = sw.tally?.[sw.playerInput] || {};
+  if (sw && sw.status === 'online' && dev.input != null) {
+    const t = dev.tally;
     tally.hidden = false;
     tally.className = `chip ${t.program ? 'onair' : t.preview ? 'preview' : ''}`;
     tally.lastChild.textContent = t.program ? 'On air' : t.preview ? 'Preview' : 'Off air';

@@ -18,7 +18,7 @@ export default {
   settings: [
     { key: 'host', label: 'Mitti address', type: 'text', default: '127.0.0.1', required: true },
     { key: 'oscPort', label: 'Mitti OSC port', type: 'number', default: 51000, min: 1, max: 65535 },
-    { key: 'feedbackPort', label: 'Feedback listen port', type: 'number', default: 51010, min: 0, max: 65535, help: '0 picks any free port.' },
+    { key: 'feedbackPort', label: 'Feedback listen port', type: 'number', default: 51010, min: 0, max: 65535, unique: true, help: 'Each Mitti needs its own. 0 picks any free port.' },
     { key: 'hyperdeck', label: 'Read clips over HyperDeck', type: 'bool', default: true },
     { key: 'hyperdeckPort', label: 'HyperDeck port', type: 'number', default: 9993, min: 1, max: 65535 },
     { key: 'advertise', label: 'Announce the feedback port on Bonjour', type: 'bool', default: true },

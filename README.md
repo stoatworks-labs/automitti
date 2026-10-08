@@ -12,9 +12,12 @@ A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti d
 know about, such as a **Roland V-160HD** or an **Analog Way Pulse 4K / Midra 4K**. They
 drive Mitti the way an ATEM does. automitti also:
 
-- sends Mitti's OSC feedback to **several destinations at once**, where Mitti has only one;
-- serves a **clip display page** with the current and next clip, their TRTs, and the current
-  clip's elapsed and remaining time.
+- runs **several Mittis at once** on the one switcher — main and backup, or one per
+  content type — each on its own input, with a tab of its own and a home page that shows
+  them all together;
+- sends each Mitti's OSC feedback to **several destinations at once**, where Mitti has only one;
+- serves a **clip display page** per Mitti with the current and next clip, their TRTs, and
+  the current clip's elapsed and remaining time.
 
 ![The clip display: current clip, big countdown, elapsed, remaining, TRT, and the next clip with its TRT](docs/hero.png)
 
@@ -58,8 +61,8 @@ macOS builds are signed and notarised by Apple, so they open normally — no Gat
 
 ## Four ways to put Mitti on the switcher
 
-Pick **one** per show. They are alternatives, and running two at once makes both act on
-every take.
+Pick **one** per Mitti. They are alternatives, and running two at once makes both act on
+every take. With several Mittis, each can use a different one.
 
 | Mode | Mitti is set to | What automitti does |
 |---|---|---|
@@ -72,9 +75,35 @@ every take.
 is a source of any fitted layer in a screen's program buffer. **During a take both buffers
 count**, so a clip rolls as the mix starts, not after it.
 
-![The control page: Mitti, switcher, emulated ATEM, NDI and relay status, the switcher's inputs with tally, and settings](docs/screenshots/control.png)
+![The control page's home tab: two Mittis, main on air and backup on preview, each with its clip, countdown, input, tally and transport; the switcher; and the switcher's inputs, marked with the Mitti each one carries](docs/screenshots/control.png)
 
-*The control page, against the Mitti and V-160HD simulators.*
+*The control page's home tab, against two Mitti simulators and the V-160HD simulator.*
+
+## Several Mittis
+
+Each Mitti is a **device** in automitti. Add one with **+ Add Mitti** in the tab bar; each
+gets a tab of its own. All of them share the one switcher and the one emulated ATEM.
+
+- **Home** shows every Mitti together: its clip, countdown, next clip, tally, which input it
+  is on, and which of the four modes is driving it. Below are the switcher and its inputs,
+  each input marked with the Mitti it carries.
+- **A Mitti's tab** has its address, its switcher input, where its feedback is relayed, its
+  NDI tally, its rules and its clip display link. Remove a Mitti from the foot of its tab.
+- **Switcher & show** has the switcher, the emulated ATEM, the network and the clip display
+  colours, which every Mitti shares.
+
+Each Mitti needs its **own feedback port**. A new one is given the next port after the
+highest in use (51010, 51011…), and appears in Mitti's *Feedback To* list as
+`automitti-51011`. Two Mittis set to the same port are flagged on both of their cards.
+
+**Every Mitti can use the one emulated ATEM** at the same time, as several Mittis can share a
+real ATEM. In each Mitti, choose *automitti* under ATEM and pick the input that Mitti is on.
+
+**Over HTTP**, `POST /api/player` takes `"device"`: a Mitti's id (from its tab's address,
+`#/device/<id>`) or its name, in any case. Without it, the request goes to the first Mitti,
+as it did before. `/api/mitti` is the same.
+
+Settings from v0.1.x carry across as the first device, named after the old clip display title.
 
 ## Switchers
 
@@ -89,18 +118,20 @@ count**, so a clip rolls as the mix starts, not after it.
 Mitti sends feedback to exactly one address. Set it to automitti (it appears in Mitti's
 *Feedback To* list as `automitti-51010` over Bonjour). automitti re-sends **every packet,
 byte for byte**, to each destination you list: Companion's Mitti module on 51001, a Stream
-Deck, a second machine. Only packets from the configured Mitti are relayed.
+Deck, a second machine. Only packets from the configured Mitti are relayed. Each Mitti has
+its own list.
 
 ## Clip display
 
-`http://<this machine>:8710/display`, full screen on any browser:
+`http://<this machine>:8710/display?device=<id or name>`, full screen on any browser. Without
+`device` it shows the first Mitti. Each Mitti's card and tab link to its own.
 
 - current clip name, big remaining time, elapsed, TRT and a progress bar;
 - next clip name and **its** TRT, which Mitti's OSC feedback doesn't carry. automitti reads
   clip durations from Mitti's HyperDeck emulation and remembers each cue's TRT once it has
   been current;
 - an on-air / preview chip from the switcher's tally, amber and red countdown thresholds, and
-  `?frames` to show frames.
+  `frames` in the query to show frames.
 
 Between feedback packets the clock runs locally, so it counts smoothly.
 
@@ -187,8 +218,14 @@ On 2026-09-29, on the author's Mac:
 - **Test suite** (`npm test`): the OSC codec and relay, the V-160HD driver against its
   simulator (login, labels, pushed tally, CUT/AUTO, pre-3.3 firmware, wrong password), the
   rules end to end with both simulators, and the ATEM emulator against `atem-connection`.
+- **Several Mittis, against simulators (2026-10-08):** two Mitti simulators on one V-160HD
+  simulator. A cut to each one's input rolled that Mitti and only that one, and the one taken
+  off paused. A Mitti was added (on the next feedback port), renamed, given an input and
+  removed from the page, and its feedback port was released. The author's own v0.1.1 settings
+  file became the first device with its relay list, NDI tally, rules and ATEM id intact.
 
 **Not yet verified:**
+- two real Mittis at once, on any switcher, and two real Mittis on one emulated ATEM;
 - a real V-160HD. It is written from Roland's documents and the Companion module, and its
   uncertain points are listed in [docs/V160HD.md](docs/V160HD.md);
 - a real Pulse 4K for this code. Its paths were read off a live Pulse 4K by LivePremier Plus;
@@ -203,11 +240,13 @@ server/            the Node server the tray app runs
   lib/             protocol code drivers share: OSC, HyperDeck (handed to drivers as `lib`)
   atem/            the ATEM protocol server and its bridge to the switcher
   ndi/             NDI tally via the installed runtime (koffi FFI)
+  devices.js       the Mittis: each a player with its own input, relay, NDI tally and rules
   rules.js         Mitti's ATEM behaviour, run through the player driver
 drivers/
   switchers/       v160hd, midra, manual: each index.js + driver code (+ sim.mjs)
   players/mitti/   OSC link and relay, feedback model, HyperDeck clip list, sim.mjs
-web/               control + settings page (driver settings drawn from each schema), clip display
+web/               control page (home, a tab per Mitti, switcher & show; driver settings drawn
+                   from each schema), clip display
 tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK)
 launcher/          the tray app (the fleet's av-launcher shell, Tauri)
 docs/              DRIVERS.md, and MITTI.md, ATEM.md, V160HD.md: the protocol research

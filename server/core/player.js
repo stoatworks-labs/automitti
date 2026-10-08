@@ -18,6 +18,10 @@ const OFFLINE = Object.freeze({
 });
 
 export class Player extends EventEmitter {
+  /**
+   * @param {{config: () => object}} opts  `config` is the DEVICE's settings
+   *   (config.js normaliseDevice): its `player` and relay `destinations`.
+   */
   constructor({ config, registry, log = () => {} }) {
     super();
     this.config = config;
@@ -34,6 +38,11 @@ export class Player extends EventEmitter {
     return d ? normaliseSettings(d.settings, c.player.settings?.[d.id]) : {};
   }
 
+  /** Whether going from device settings `a` to `b` needs the driver made again. */
+  changes(a, b = this.config()) {
+    return a.player.type !== b.player.type || JSON.stringify(this.settings(a)) !== JSON.stringify(this.settings(b));
+  }
+
   async start() { await this.#open(); }
 
   async stop() {
@@ -45,9 +54,7 @@ export class Player extends EventEmitter {
   }
 
   async reconfigure(prev) {
-    const same = prev.player.type === this.config().player.type
-      && JSON.stringify(this.settings(prev)) === JSON.stringify(this.settings());
-    if (!same) {
+    if (this.changes(prev)) {
       await this.stop();
       await this.#open();
     }

@@ -4,11 +4,11 @@
  *
  *   node server/index.js [--data <dir>] [--port <http port>]
  *
- * One process holds every link: the media player (a player driver — Mitti
- * built in), the switcher (a switcher driver), the emulated ATEM, NDI tally,
- * the rules, and the web pages. Settings live in <data>/config.json and are
- * edited from the page at /. Drivers are found in <app>/drivers and
- * <data>/drivers — docs/DRIVERS.md.
+ * One process holds every link: the devices (each a media player — a player
+ * driver, Mitti built in — with its NDI tally and rules), the one switcher (a
+ * switcher driver) they are all on, the emulated ATEM, and the web pages.
+ * Settings live in <data>/config.json and are edited from the page at /.
+ * Drivers are found in <app>/drivers and <data>/drivers — docs/DRIVERS.md.
  */
 
 import http from 'node:http';
@@ -19,11 +19,9 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { ConfigStore, dataDir } from './config.js';
 import { Registry, BUILTIN } from './core/registry.js';
-import { Player } from './core/player.js';
 import { Switcher } from './core/switcher.js';
+import { Devices } from './devices.js';
 import { AtemBridge } from './atem/bridge.js';
-import { NdiTally } from './ndi/tally.js';
-import { Rules } from './rules.js';
 import { Advertiser } from './bonjour.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -52,11 +50,9 @@ const argPort = process.argv.includes('--port') ? Number(process.argv[process.ar
 const argHost = process.env.AUTOMITTI_HOST || null;
 const config = () => store.get();
 
-const player = new Player({ config, registry, log });
 const switcher = new Switcher({ config, registry, log });
+const devices = new Devices({ config, switcher, registry, log });
 const atem = new AtemBridge({ config, switcher, log });
-const ndi = new NdiTally({ config, switcher, log });
-const rules = new Rules({ config, switcher, player, log });
 const bonjour = new Advertiser({ log });
 
 /* ------------------------------------------------------------ web */
@@ -69,15 +65,20 @@ function status() {
     stage: STAGE,
     config: config(),
     drivers: registry.list(),
-    player: player.snapshot(),
+    devices: devices.snapshot(),
     switcher: switcher.snapshot(),
     atem: atem.snapshot(),
     addresses: Object.entries(os.networkInterfaces()).flatMap(([name, list]) => (list || [])
       .filter((a) => a.family === 'IPv4' && !a.internal).map((a) => ({ name, address: a.address }))),
-    ndi: ndi.snapshot(),
-    rules: rules.snapshot(),
     announcing,
   };
+}
+
+/* The device a request names (`device`: an id or a name), the first one when it names none. */
+function deviceFor(key) {
+  const device = devices.get(key);
+  if (!device) throw Object.assign(new Error(`no device called "${key}"`), { status: 404 });
+  return device;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -91,9 +92,30 @@ const server = http.createServer(async (req, res) => {
       await applyConfig(prev, next);
       return json(res, next);
     }
-    /* /api/mitti is the v0.1.0 spelling, kept so Companion buttons made for it still work. */
+    if (url.pathname === '/api/devices' && req.method === 'POST') {
+      const { type, name } = await body(req);
+      const draft = devices.draft(type ? String(type) : undefined);
+      if (!registry.player(draft.player.type)) return json(res, { error: `no player driver called "${draft.player.type}" is installed` }, 400);
+      if (name) draft.name = String(name);
+      const prev = config();
+      const next = store.set({ ...prev, devices: [...prev.devices, draft] });
+      await applyConfig(prev, next);
+      return json(res, { device: next.devices.at(-1), config: next });
+    }
+    const one = /^\/api\/devices\/([^/]+)$/.exec(url.pathname);
+    if (one && req.method === 'DELETE') {
+      const device = deviceFor(decodeURIComponent(one[1]));
+      const prev = config();
+      if (prev.devices.length < 2) return json(res, { error: 'the last device cannot be removed' }, 409);
+      const next = store.set({ ...prev, devices: prev.devices.filter((d) => d.id !== device.id) });
+      await applyConfig(prev, next);
+      return json(res, { config: next });
+    }
+    /* /api/mitti is the v0.1.0 spelling, kept so Companion buttons made for it still work.
+       With no `device` (in the body or the query) it is the first device, as it was. */
     if ((url.pathname === '/api/player' || url.pathname === '/api/mitti') && req.method === 'POST') {
-      const { action, address, args, via } = await body(req);
+      const { device: key = url.searchParams.get('device'), action, address, args, via } = await body(req);
+      const { player } = deviceFor(key);
       if (address) player.command(String(address), Array.isArray(args) ? args : []);
       else await player.act(String(action), via);
       return json(res, { ok: true });
@@ -103,12 +125,12 @@ const server = http.createServer(async (req, res) => {
       await switcher.command(String(action), input);
       return json(res, { ok: true });
     }
-    if (url.pathname === '/api/ndi/sources') return json(res, await ndi.sources());
+    if (url.pathname === '/api/ndi/sources') return json(res, await deviceFor(url.searchParams.get('device')).ndi.sources());
     if (url.pathname.startsWith('/api/')) return json(res, { error: 'not found' }, 404);
     return serveStatic(url.pathname, res);
   } catch (err) {
     log(`HTTP ${req.method} ${url.pathname}: ${err.message}`);
-    return json(res, { error: err.message }, 500);
+    return json(res, { error: err.message }, err.status || 500);
   }
 });
 
@@ -153,23 +175,26 @@ function schedule() {
   if (pending) return;
   pending = setTimeout(() => { pending = null; broadcast({ type: 'status', status: status() }); }, 50);
 }
-player.on('change', schedule);
+devices.on('change', schedule);
 switcher.on('change', schedule);
 atem.on('change', schedule);
-ndi.on('change', schedule);
-rules.on('change', schedule);
 setInterval(schedule, 1000);
 
 /* ------------------------------------------------------------ lifecycle */
 
-async function applyConfig(prev, next) {
-  await player.reconfigure(prev);
-  await switcher.reconfigure(prev);
-  await atem.reconfigure(prev);
-  await ndi.reconfigure(prev);
-  advertise();
-  log('settings saved');
-  schedule();
+/* One at a time: two saves in quick succession must not start a device twice. */
+let applying = Promise.resolve();
+function applyConfig(prev) {
+  const run = applying.then(async () => {
+    await devices.reconfigure();
+    await switcher.reconfigure(prev);
+    await atem.reconfigure(prev);
+    advertise();
+    log('settings saved');
+    schedule();
+  });
+  applying = run.catch(() => {});
+  return run;
 }
 
 const localIPv4 = () => Object.values(os.networkInterfaces()).flat()
@@ -189,7 +214,7 @@ function advertise() {
   const address = c.advertiseAddress && !fallback ? c.advertiseAddress : undefined;
   announcing = { pinned: c.advertiseAddress, address: address || '', fallback };
   bonjour.set([
-    ...player.bonjour().map((spec) => ({ ...spec, key: `player-${spec.key}` })),
+    ...devices.bonjour(),
     ...(c.atem.enabled && c.atem.advertise ? atem.bonjourServices() : []),
   ].map((spec) => ({ ...spec, address })));
 }
@@ -210,27 +235,25 @@ setInterval(() => {
 
 async function main() {
   const port = argPort || config().httpPort;
-  await player.start();
+  await devices.start();
   await switcher.start();
   await atem.start();
-  await ndi.start();
-  rules.start();
   advertise();
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, argHost || config().httpBind, resolve);
   });
-  log(`automitti ${VERSION}${STAGE ? ` (${STAGE})` : ''} on http://localhost:${port}/ (display: /display) — player ${player.snapshot().label}, switcher ${switcher.snapshot().label}`);
+  const players = devices.list().map((d) => `${d.name} (${d.player.snapshot().label})`).join(', ');
+  log(`automitti ${VERSION}${STAGE ? ` (${STAGE})` : ''} on http://localhost:${port}/ (display: /display) — ${players}; switcher ${switcher.snapshot().label}`);
   for (const p of registry.problems) log(`driver not loaded: ${p.path}: ${p.problems.join('; ')}`);
 }
 
 function shutdown() {
   log('stopping');
   bonjour.stop();
-  player.stop();
+  devices.stop();
   switcher.stop();
   atem.stop();
-  ndi.stop();
   server.close();
   setTimeout(() => process.exit(0), 300).unref();
 }

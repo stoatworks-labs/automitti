@@ -74,6 +74,11 @@ A field can also have `default`, `help` (shown on hover) and `required` (the swi
 started without it, and the page says which field is missing). Each driver's settings are kept
 separately, so switching to another driver and back loses nothing.
 
+A player's field can be marked `unique: true`: each Mitti (device) using that driver needs its
+own value, as with a port it listens on. A new device gets one past the highest its devices
+use, or the default for the first, and two devices that share a value are flagged on both of
+their cards. Empty and `0` are exempt. Mitti's `feedbackPort` is one.
+
 `create()` is also passed `lib`: the protocol code the built-in drivers use. That's
 `lib.osc.encode/decode` and `lib.hyperdeck.DeckLink` with its parser. A driver in the data
 folder can't import from the app by path, and this is how it gets the same building blocks.
@@ -117,8 +122,11 @@ which has no device behind it at all. Read it first.
 
 ## A player
 
-`create()` also gets `destinations()`: the relay list, read live. It returns an `EventEmitter`
-with:
+A player driver runs **once per device**, several at a time (main and backup Mittis), each
+with its own settings. Keep all state on the instance, none at module level.
+
+`create()` also gets `destinations()`: that device's relay list, read live. It returns an
+`EventEmitter` with:
 
 | Method | Does |
 |---|---|

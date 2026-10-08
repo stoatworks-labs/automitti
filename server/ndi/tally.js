@@ -99,9 +99,16 @@ async function loadNdi(explicit) {
 }
 
 export class NdiTally extends EventEmitter {
-  constructor({ config, switcher, log = () => {} }) {
+  /**
+   * @param {{config: () => object, library?: () => string}} opts  `config` is
+   *   the DEVICE's settings (config.js normaliseDevice): its `ndi`, and the
+   *   `input` the tally follows. `library` is the machine's NDI library setting.
+   */
+  constructor({ config, library = () => '', switcher, log = () => {} }) {
     super();
     this.config = config;
+    this.library = library;
+    this.openedWith = null;
     this.switcher = switcher;
     this.log = log;
     this.finder = null;
@@ -128,9 +135,16 @@ export class NdiTally extends EventEmitter {
     this.finder = null;
   }
 
+  /** Stop for good, and let go of the switcher, which outlives a removed device. */
+  close() {
+    this.stop();
+    this.switcher.off('tally', this.onTally);
+    this.switcher.off('change', this.onTally);
+  }
+
   async reconfigure(prev) {
     const a = prev.ndi; const b = this.config().ndi;
-    if (a.enabled !== b.enabled || a.source !== b.source || a.library !== b.library) {
+    if (a.enabled !== b.enabled || a.source !== b.source || (b.enabled && this.openedWith !== this.library())) {
       this.stop();
       await this.#open();
     }
@@ -140,8 +154,9 @@ export class NdiTally extends EventEmitter {
   async #open() {
     const c = this.config().ndi;
     this.error = null;
+    this.openedWith = this.library();
     if (!c.enabled) { this.emit('change'); return; }
-    const ndi = await loadNdi(c.library);
+    const ndi = await loadNdi(this.openedWith);
     if (!ndi) {
       this.error = loadError;
       this.log(`NDI: ${this.error}`);
@@ -160,7 +175,7 @@ export class NdiTally extends EventEmitter {
 
   /** The NDI sources on the network right now. */
   async sources() {
-    const ndi = await loadNdi(this.config().ndi.library);
+    const ndi = await loadNdi(this.library());
     if (!ndi) return { error: loadError, sources: [] };
     const fresh = !this.finder;
     this.#ensureFinder();
@@ -224,7 +239,7 @@ export class NdiTally extends EventEmitter {
 
   #push() {
     if (!this.recv || !lib) return;
-    const id = this.switcher.playerInput();
+    const id = this.switcher.inputOf(this.config().input);
     const t = id == null ? { program: false, preview: false } : this.switcher.tallyOf(id);
     if (t.program === this.sent.program && t.preview === this.sent.preview) return;
     lib.setTally(this.recv, { on_program: t.program, on_preview: t.preview });

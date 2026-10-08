@@ -9,8 +9,8 @@
  *   tally     { [id]: { program, preview } }
  *   inTransition, device
  *
- * and asks it for `playerInput()` — which switcher input the media player
- * feeds, from the setting (a number or a name) — and `tallyOf(id)`.
+ * and asks it for `inputOf(setting)` — which switcher input a device feeds,
+ * from its setting (a number or a name) — and `tallyOf(id)`.
  *
  * The driver contract is in core/contract.js and docs/DRIVERS.md.
  */
@@ -116,9 +116,8 @@ export class Switcher extends EventEmitter {
     }
   }
 
-  /** The input the media player feeds, resolved from the setting (a number or a name). */
-  playerInput() {
-    const raw = this.config().switcher.input;
+  /** A device's input, resolved from its setting (a number or a name). */
+  inputOf(raw) {
     if (!raw) return null;
     const n = Number(raw);
     if (Number.isInteger(n) && this.model.inputs.some((i) => i.id === n)) return n;
@@ -161,7 +160,6 @@ export class Switcher extends EventEmitter {
       status: !this.descriptor ? 'off' : this.status,
       error: this.error,
       ...this.model,
-      playerInput: this.playerInput(),
       capabilities: { cut: true, auto: true, preview: true, program: true, ...(this.driver?.capabilities?.() || {}) },
     };
   }
