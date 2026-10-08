@@ -80,7 +80,9 @@ use, or the default for the first, and two devices that share a value are flagge
 their cards. Empty and `0` are exempt. Mitti's `feedbackPort` is one.
 
 `create()` is also passed `lib`: the protocol code the built-in drivers use. That's
-`lib.osc.encode/decode` and `lib.hyperdeck.DeckLink` with its parser. A driver in the data
+`lib.osc.encode/decode`, `lib.hyperdeck.DeckLink` with its parser, and `lib.analogway`: Analog
+Way's mnemonic protocol on TCP 10500 (`AwLink`, a kept-up session, with `encode`/`decode`), which
+the LiveCore and Midra drivers use and a PLS300 driver could too. A driver in the data
 folder can't import from the app by path, and this is how it gets the same building blocks.
 
 ## A switcher

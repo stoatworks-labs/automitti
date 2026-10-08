@@ -9,8 +9,9 @@
 > V-160HD or Pulse 4K.
 
 A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti doesn't
-know about, such as a **Roland V-160HD** or an **Analog Way Pulse 4K / Midra 4K**. They
-drive Mitti the way an ATEM does. automitti also:
+know about, such as a **Roland V-160HD**, an **Analog Way Pulse 4K / Midra 4K**, an older
+**Analog Way Midra** (Pulse², Eikos², QuickVu…) or a **LiveCore** (Ascender, NeXtage,
+SmartMatriX Ultra). They drive Mitti the way an ATEM does. automitti also:
 
 - runs **several Mittis at once** on the one switcher — main and backup, or one per
   content type — each on its own input, with a tab of its own and a home page that shows
@@ -28,7 +29,8 @@ under 30 s and red under 10 s, and the ON AIR chip is the switcher's tally for M
                         ┌──────────────── automitti ────────────────┐
  V-160HD  ◀─ TCP 8023 ─▶│ switcher driver ─┬─▶ emulated ATEM (UDP 9910) ◀──── Mitti's ATEM integration
  Pulse 4K ◀─ AWJ 10606 ▶│   (tally, takes) ├─▶ NDI tally receiver ─────────▶ Mitti's NDI integration
-                        │                  └─▶ rules ── OSC / HyperDeck ──▶ Mitti (direct control)
+ LiveCore ◀─ TCP 10500 ▶│                  │
+ Midra    ◀─ TCP 10500 ▶│                  └─▶ rules ── OSC / HyperDeck ──▶ Mitti (direct control)
                         │                                                  │
  Companion, Stream Deck ◀── OSC relay ◀── Mitti OSC feedback (UDP 51010) ◀─┘
  any browser ◀── /display (clip clock), / (control + settings)
@@ -111,6 +113,8 @@ Settings from v0.1.x carry across as the first device, named after the old clip 
 |---|---|---|
 | **Roland V-160HD** | TCP 8023, network password | Tally is **pushed** by the unit (TALLY AUTO SEND). The unit allows **one** LAN client, so RCS over LAN cannot run at the same time. Firmware ≥ 3.3 uses `CUT;`/`ATO;`; older firmware presses the panel buttons. Labels become input names. Protocol notes: [docs/V160HD.md](docs/V160HD.md). |
 | **Analog Way Pulse 4K / Midra 4K** (QuickVu, Pulse, Eikos, QuickMatrix) | AWJ, TCP 10606 | AWJ does not push changes, so the transition state is polled every 50 ms and layer sources every 400 ms. Optional screen filter (S1,S2) and the layer that preview/program selects write to. Take = `xTake`, cut = `xCut`, on every screen in scope. |
+| **Analog Way LiveCore** (Ascender 16/32/48, NeXtage 08/16, SmartMatriX Ultra) | Analog Way's mnemonic protocol, TCP 10500 | A screen shows one of its preset banks, and a take changes which. An input is on air while it is a layer source in the bank on air, and in both banks during a take. **AUTO sweeps the T-bar** over the take time, because the LiveCore's own take commands stall over the protocol; CUT jumps it. Selects write the chosen layer and apply it with GROUP_UPDATE, in preset-update mode, as the Web RCS runs. Input names are the frame's labels. |
+| **Analog Way Midra** (Pulse², Eikos², Saphyr, SmartMatriX², QuickMatriX, QuickVu) | the same protocol, TCP 10500 | Program and preview are fixed. An input is on air while it is a source of a live layer (not the frame layer) in program, and in preview too during a take. AUTO is the Midra's own take with each layer's transition time, **with preset-update mode turned off first**, since a take does nothing while it is on and RCS2 turns it on. CUT moves the T-bar through its middle, the only way it lands. A Midra silently refuses an input with no signal, so a select is read back and says so. The frame has no input names, so the driver takes them in its settings. A Pulse² takes **one** control session. |
 | **Manual / HTTP** | none | Tally is set from the page or `POST /api/switcher`. This lets anything that can send HTTP (Companion) feed it. |
 
 ## OSC feedback to several destinations
@@ -140,8 +144,10 @@ Between feedback packets the clock runs locally, so it counts smoothly.
 - **Tray app:** download it from Releases, press **Start server**, and open the page.
   Settings are stored in `~/Library/Application Support/automitti/config.json`.
 - **From a checkout:** `npm install && npm start`, then open <http://localhost:8710/>.
-- **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck) and
-  `npm run sim:v160hd` is a V-160HD.
+- **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck),
+  `npm run sim:v160hd` a V-160HD, `npm run sim:livecore` a NeXtage 16 and
+  `npm run sim:midra-classic` a Pulse², the last two on TCP 10500. Run a second Mitti with
+  `npm run sim -- --osc 51100 --hyperdeck 9994 --feedback 127.0.0.1:51011`.
 
 ## Adding a switcher or a player
 
@@ -224,8 +230,19 @@ On 2026-09-29, on the author's Mac:
   removed from the page, and its feedback port was released. The author's own v0.1.1 settings
   file became the first device with its relay list, NDI tally, rules and ATEM id intact.
 
+- **LiveCore and Midra (2026-10-08), against simulators only:** the drivers are written from
+  [openRCS](https://github.com/stoatworks-labs/openrcs), which established the protocol and its
+  traps on a real NeXtage 16 and Pulse². Against simulators that play those traps back, both
+  passed the contract test and their own tests (labels, preset-update mode, GROUP_UPDATE, the
+  T-bar sweep, the Midra's take and cut, a refused input, the wrong family), and in the app a
+  take on each rolled the right Mitti as it began.
+
 **Not yet verified:**
 - two real Mittis at once, on any switcher, and two real Mittis on one emulated ATEM;
+- a real LiveCore or Midra with automitti. In particular: whether a LiveCore's T-bar sweep
+  looks right at the default 1 s; whether a Midra's take is seen as it starts (automitti's own
+  takes are; one from the front panel is seen only if `GCtak` shows it); whether a Midra keeps a
+  program select without a further commit; and which models besides the Pulse² report what;
 - a real V-160HD. It is written from Roland's documents and the Companion module, and its
   uncertain points are listed in [docs/V160HD.md](docs/V160HD.md);
 - a real Pulse 4K for this code. Its paths were read off a live Pulse 4K by LivePremier Plus;
@@ -237,13 +254,15 @@ On 2026-09-29, on the author's Mac:
 ```
 server/            the Node server the tray app runs
   core/            the driver contract, the registry, and the switcher and player hosts
-  lib/             protocol code drivers share: OSC, HyperDeck (handed to drivers as `lib`)
+  lib/             protocol code drivers share: OSC, HyperDeck, Analog Way's mnemonic
+                   protocol (handed to drivers as `lib`)
   atem/            the ATEM protocol server and its bridge to the switcher
   ndi/             NDI tally via the installed runtime (koffi FFI)
   devices.js       the Mittis: each a player with its own input, relay, NDI tally and rules
   rules.js         Mitti's ATEM behaviour, run through the player driver
 drivers/
-  switchers/       v160hd, midra, manual: each index.js + driver code (+ sim.mjs)
+  switchers/       v160hd, midra, livecore, midra-classic, manual: each index.js + driver
+                   code (+ sim.mjs; livecore's plays a Midra too)
   players/mitti/   OSC link and relay, feedback model, HyperDeck clip list, sim.mjs
 web/               control page (home, a tab per Mitti, switcher & show; driver settings drawn
                    from each schema), clip display

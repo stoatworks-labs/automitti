@@ -305,7 +305,9 @@ function switcherCard() {
 function updateSwitcherCard(el) {
   const s = status.switcher;
   dot(F(el, 'dot'), s.status === 'online' ? 'ok' : s.status === 'off' ? '' : s.status === 'connecting' ? 'warn' : 'bad');
-  setText(F(el, 'name'), s.type === 'none' ? 'None' : `${s.label}${s.device?.version ? ` ${s.device.version}` : ''}`);
+  /* The model the device reports (NeXtage 16, Pulse²) says more than the driver's name. */
+  setText(F(el, 'name'), s.type === 'none' ? 'None' : `${s.device?.model || s.label}${s.device?.version ? ` ${s.device.version}` : ''}`);
+  F(el, 'name').title = s.label;
   const name = (id) => inputName(id) ?? (id == null ? '—' : `#${id}`);
   setHtml(F(el, 'info'), s.type === 'none' ? 'Not configured — choose one under Switcher &amp; show'
     : `${esc(s.status)}${s.error ? ` — ${esc(s.error)}` : ''}<br>PGM <b>${esc(name(s.program))}</b> · PVW <b>${esc(name(s.preview))}</b>${s.inTransition ? ' · <b>in transition</b>' : ''}`);
