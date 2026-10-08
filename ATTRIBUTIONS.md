@@ -18,6 +18,14 @@ Copyright: Stoatworks Labs
 
 Same fleet, copied rather than shared: server/lib/hyperdeck/protocol.js, the Blackmagic HyperDeck Ethernet Protocol's parser and command builders, is copied unchanged from LivePremier Plus (plugins/hyperdeck/protocol.js, 9703ce3), and link.js is copied from the same commit and changed to wait for the deck's greeting before calling it connected and to end commands with LF, because Mitti refuses CRLF. server/rules.js mirrors LivePremier Plus's HyperDeck rules, and the Pulse 4K / Midra 4K driver's object model was read off a live Pulse 4K on 3.3.10 by LivePremier Plus.
 
+### Analog Way mnemonic protocol and its traps — Stoatworks openrcs
+
+<https://github.com/stoatworks-labs/openrcs>  
+Licence: MIT  
+Copyright: Stoatworks Labs
+
+Same fleet, written from rather than copied: server/lib/analogway.js, the LiveCore driver (drivers/switchers/livecore/: Ascender, NeXtage, SmartMatriX Ultra), the Midra driver (drivers/switchers/midra-classic/: Pulse², Eikos², QuickVu and the rest of the range before 4K) and the simulator drivers/switchers/livecore/sim.mjs were written from openRCS's docs/PROTOCOL.md, docs/NOTES.md and crates/openrcs-server/web/app.js, with no code copied verbatim. From there come the TCP 10500 framing; the LiveCore's preset banks, with GCsta naming the bank on air, and its take as a sweep of the T-bar, because the device's own take verbs stall a real NeXtage; the Midra take GCtak with preset-update mode (CTpmu) turned off first, because it is dead while on; the Midra cut as a GCtba move in two steps, which only lands if the bar is seen to travel; the Midra's silent refusal of an input with no signal, which is why a select is read back; and the PDEV and DEV model maps. openRCS found all of it on a real NeXtage 16 and Pulse²; automitti's drivers have run against the simulator only.
+
 ## Third-party code this project uses
 
 Libraries, SDKs and frameworks the project is built on or bundles.
