@@ -78,6 +78,12 @@ The OSC command and feedback vocabulary, the HyperDeck emulation and the map of 
 
 Read as the reference OSC client and feedback parser for docs/MITTI.md. automitti's liveness check is Companion's scheme: /mitti/ping every 2 s, online while a /mitti/pong has come back within the last 4 s.
 
+### QLab — Figure 53
+
+<https://qlab.app>
+
+The QLab driver's OSC vocabulary comes from Figure 53's OSC dictionary for QLab 5 (https://qlab.app/docs/v5/scripting/osc-dictionary-v5/), and what QLab does that the dictionary doesn't say (docs/QLAB.md) from driving the installed QLab 5.5.10 over OSC. Run end to end against a real QLab 5.5.10 with Wait cues, including the rules through the server. Not affiliated with or endorsed by Figure 53.
+
 ### Blackmagic ATEM Switchers SDK 10.2.1 — Blackmagic Design
 
 Mitti's ATEM integration is this SDK, so the emulated ATEM in server/atem/ was established against it: the SDK's own DeviceInfo sample and a small SDK client (tools/sdk/tallytest.cpp, run by tools/sdk-check.sh) accept it, and per-input tally, SetPreviewInput, PerformCut and PerformAutoTransition work end to end. The protocol-version rule, the completeness check on the initial state dump and the atom sizes were read from a disassembly of the installed BMDSwitcherAPI.bundle; docs/ATEM.md labels every fact VERIFIED, DISASM, SRC or UNCERTAIN.
