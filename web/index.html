@@ -402,7 +402,7 @@ function updateDevice() {
   const r = d.rules;
   const rules = v.querySelector('[data-card="rules"]');
   dot(F(rules, 'dot'), !c?.rules.enabled ? '' : r.active ? 'ok' : 'warn');
-  setHtml(F(rules, 'info'), !c?.rules.enabled ? 'Off' : !r.active ? 'Waiting for the switcher and this Mitti\'s input'
+  setHtml(F(rules, 'info'), !c?.rules.enabled ? 'Off' : !r.active ? `Waiting for the switcher and ${esc(d.name)}'s input`
     : `Active over ${esc(c.rules.via)}${r.last ? `<br>Last: ${esc(r.last.what)}` : ''}`);
 
   const relay = d.player.detail?.relay;
@@ -444,7 +444,7 @@ function deviceForm(id) {
   const display = `/display?device=${encodeURIComponent(id)}`;
   return `
   <fieldset>
-    <legend>This Mitti</legend>
+    <legend>This ${esc(pd?.label || 'player')}</legend>
     <div class="fields">
       <label>Name (its tab and clip display title)<input name="name" value="${esc(c.name)}"></label>
       <label>Player<select name="player.type">${options(players, type)}</select></label>
@@ -483,7 +483,7 @@ function deviceForm(id) {
   </fieldset>` : ''}
 
   <fieldset>
-    <legend>Rules — automitti drives this Mitti directly</legend>
+    <legend>Rules — automitti drives ${esc(c.name)} directly</legend>
     <div class="fields">
       <label class="check"><input type="checkbox" name="rules.enabled" ${c.rules.enabled ? 'checked' : ''}>Enable rules</label>
       <label>Send over<select name="rules.via">${options(via, c.rules.via)}</select></label>
@@ -493,7 +493,7 @@ function deviceForm(id) {
       <label>Cue ends<select name="rules.onEnd">${options([{ value: 'none', label: 'Do nothing' }, { value: 'cut', label: 'CUT' }, { value: 'auto', label: 'AUTO' }], c.rules.onEnd)}</select></label>
       <label>End lead (seconds early)<input name="rules.lead" type="number" step="0.1" min="0" max="60" value="${c.rules.lead}"></label>
     </div>
-    <p class="help">The same choices Mitti offers for an ATEM, run from here — for when this Mitti is not using its own ATEM or NDI integration. Don't enable rules while its own ATEM/NDI trigger points at automitti, or both will act on every take.</p>
+    <p class="help">${ints.length ? 'The same choices Mitti offers for an ATEM, run from here — for when this Mitti is not using its own ATEM or NDI integration. Don\'t enable rules while its own ATEM/NDI trigger points at automitti, or both will act on every take.' : `${esc(pd?.label || 'This player')} can't follow a switcher by itself: these rules are what roll it on a take.`}</p>
   </fieldset>
 
   <fieldset>

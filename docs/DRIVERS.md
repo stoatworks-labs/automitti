@@ -167,21 +167,17 @@ The rules call `act()`:
 They take a cut or auto on the switcher when `remainingSec` reaches zero, or the lead time,
 while the clip is playing.
 
-### What a QLab driver would need
+### A second player: QLab
 
-QLab speaks OSC on UDP 53000, and answers `/reply/...` to the port the command came from. A
-player driver for it would:
+[`drivers/players/qlab`](../drivers/players/qlab/index.js) is the other built-in player, and the
+one to read for a player that is not a playlist. QLab is a cue stack, so its driver decides what
+`current`, `next` and each action mean there: `current` is the running clip or the one the
+playhead stands by on, and `play` GOes the cue list. It has no ATEM or NDI integration of its
+own (`integrations: []`), so the rules drive it, and it has nothing to relay (`relay: false`).
 
-- **Links:** open one UDP socket; `connect` with the workspace passcode, then send `/updates 1`
-  for pushed changes.
-- **Actions:** map `play` to `/go`, `pause` to `/pause`, `rewind` to `/reset` (or `/cue/selected/…`),
-  `next`/`prev` to `/playhead/next` and `/playhead/previous`.
-- **Snapshot:** build it from `/runningCues` and `/cue/playhead/…` (name, `duration`, `actionElapsed`),
-  polled or pushed. `current` is the running cue, `next` the playhead cue.
-- **Descriptor:** `via: [{ value: 'osc', label: 'OSC' }]`, `integrations: []` (QLab follows neither an
-  ATEM nor NDI tally, so the rules drive it), and `relay: false`.
-
-None of that is written yet. It's here so the contract is checked against a second player.
+It talks OSC over TCP, not UDP: over UDP QLab replies to port 53001 rather than to the port a
+message came from. [docs/QLAB.md](QLAB.md) has that and the other things a real QLab 5.5.10
+does that its OSC dictionary doesn't say.
 
 ## Testing
 

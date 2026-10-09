@@ -12,6 +12,7 @@
   "scripts": {
     "start": "node server/index.js",
     "sim": "node drivers/players/mitti/sim.mjs",
+    "sim:qlab": "node drivers/players/qlab/sim.mjs",
     "test": "node --test --test-force-exit --test-timeout=20000 test/*.test.js",
     "sim:v160hd": "node drivers/switchers/v160hd/sim.mjs",
     "sim:livecore": "node drivers/switchers/livecore/sim.mjs --family livecore",

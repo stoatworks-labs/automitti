@@ -2,7 +2,8 @@
 
 > **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
 > (Anthropic), directed and reviewed by a human author. It has run against a real Mitti
-> 2.8.18 and Blackmagic's own Switcher SDK, but the switchers only against simulators — see
+> 2.8.18, a real QLab 5.5.10 and Blackmagic's own Switcher SDK, but the switchers only against
+> simulators — see
 > [What has been verified](#what-has-been-verified) before relying on it for a show.
 >
 > **Preview.** v0.1.1 is a preview release: complete enough to try, not yet proven on a real
@@ -18,7 +19,10 @@ SmartMatriX Ultra). They drive Mitti the way an ATEM does. automitti also:
   them all together;
 - sends each Mitti's OSC feedback to **several destinations at once**, where Mitti has only one;
 - serves a **clip display page** per Mitti with the current and next clip, their TRTs, and
-  the current clip's elapsed and remaining time.
+  the current clip's elapsed and remaining time;
+- drives **[QLab 5](https://qlab.app)** the same way, as another kind of device: a take onto
+  QLab's input GOes its cue list, the end of a video cue can take it off again, and the clip
+  display counts the running video down.
 
 ![The clip display: current clip, big countdown, elapsed, remaining, TRT, and the next clip with its TRT](docs/hero.png)
 
@@ -37,8 +41,8 @@ under 30 s and red under 10 s, and the ON AIR chip is the switcher's tally for M
                         └────────────────────────────────────────────┘
 ```
 
-Not affiliated with or endorsed by imimot (Mitti), Roland, Analog Way, Blackmagic Design or
-Vizrt (NDI). Their names are used only to say what this works with.
+Not affiliated with or endorsed by imimot (Mitti), Figure 53 (QLab), Roland, Analog Way,
+Blackmagic Design or Vizrt (NDI). Their names are used only to say what this works with.
 
 <!-- downloads:start -->
 
@@ -107,6 +111,27 @@ as it did before. `/api/mitti` is the same.
 
 Settings from v0.1.x carry across as the first device, named after the old clip display title.
 
+## QLab
+
+A device's **Player** can be QLab instead of Mitti. QLab has no ATEM or NDI integration of its
+own, so automitti drives it with the **rules**: turn them on, and *Play* GOes the cue list (or
+resumes a clip that was paused), *Cue ends* takes the switcher off it, and *Taken off air* can
+pause or stop it. It is connected to over OSC on TCP 53000.
+
+- **The passcode.** QLab 5 gives every new workspace a 4-digit OSC passcode and gives
+  connections without one no access at all. Copy it from *Workspace Settings → Network → OSC
+  Access* into the device's settings; it needs **Control** for the rules to work.
+- **What counts as a clip.** Only cues of the types in *Cue types that are clips* — Video, unless
+  you add others — are shown and followed. A light or audio cue between two videos is passed
+  over, and the clip display's *Next* is the next video.
+- **Current and next.** The current clip is the one running or paused, or else the one the
+  playhead stands by on, which the next GO plays. A clip that runs out stays current at 0 left
+  for a moment, which is what lets *Cue ends* fire.
+- **Workspace and cue list** are the first one open and the current one unless you name them.
+
+How QLab's cue stack is mapped onto a player, and what a real QLab does that its OSC
+dictionary doesn't say, is in [docs/QLAB.md](docs/QLAB.md).
+
 ## Switchers
 
 | | Transport | Notes |
@@ -145,27 +170,29 @@ Between feedback packets the clock runs locally, so it counts smoothly.
   Settings are stored in `~/Library/Application Support/automitti/config.json`.
 - **From a checkout:** `npm install && npm start`, then open <http://localhost:8710/>.
 - **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck),
-  `npm run sim:v160hd` a V-160HD, `npm run sim:livecore` a NeXtage 16 and
+  `npm run sim:qlab` a QLab workspace (passcode 1234; `-- --port 53010` when QLab itself is
+  running), `npm run sim:v160hd` a V-160HD, `npm run sim:livecore` a NeXtage 16 and
   `npm run sim:midra-classic` a Pulse², the last two on TCP 10500. Run a second Mitti with
   `npm run sim -- --osc 51100 --hyperdeck 9994 --feedback 127.0.0.1:51011`.
 
 ## Adding a switcher or a player
 
-Every switcher, and Mitti itself, is a **driver**: a folder with an `index.js` that describes
+Every switcher, and every player (Mitti, QLab), is a **driver**: a folder with an `index.js` that describes
 it (name, settings, how to create it) and code that speaks its protocol. The rest of automitti
 (the emulated ATEM, NDI tally, the rules, the clip display, the settings page) only ever talks to
 "the switcher" and "the player", so a new driver gets all of it without any change elsewhere.
 
 - Built-in drivers are in [`drivers/`](drivers/): `switchers/v160hd`, `switchers/midra`,
-  `switchers/manual` and `players/mitti`.
+  `switchers/livecore`, `switchers/midra-classic`, `switchers/manual`, `players/mitti` and
+  `players/qlab`.
 - Your own go in `drivers/switchers/<id>/` or `drivers/players/<id>/` inside automitti's data
   folder (`~/Library/Application Support/automitti/` on a Mac). automitti picks them up at start,
   and one with a built-in's id replaces it.
 - `npm test` holds every driver to the contract, and runs it against its simulator if it has one.
   `AUTOMITTI_DRIVERS=<folder> npm test` does the same for yours.
 
-[docs/DRIVERS.md](docs/DRIVERS.md) has the contract, a skeleton to copy, and what a QLab (or any
-other player) driver would need. A driver is code that runs with automitti's access to your
+[docs/DRIVERS.md](docs/DRIVERS.md) has the contract, a skeleton to copy, and how the QLab driver
+maps a cue stack onto a player. A driver is code that runs with automitti's access to your
 network, so only install ones you trust.
 
 ## Traps worth knowing
@@ -196,6 +223,12 @@ network, so only install ones you trust.
   else already holds it.
 - **NDI is loaded from the machine's own NDI runtime** (NDI Tools); automitti doesn't bundle
   it.
+- **QLab answers nothing while no workspace is open**, not even `/version`. The device says
+  so, and joins the workspace as soon as one opens.
+- **One wrong QLab passcode locks you out for a while**: QLab refuses even the right one for
+  some seconds. automitti tries once, then waits 30 s, rather than lengthen the lockout.
+- **QLab's UDP replies go to port 53001**, not back to the sender's port. automitti uses TCP,
+  so it doesn't compete with Companion's QLab module for 53001.
 
 ## What has been verified
 
@@ -237,7 +270,16 @@ On 2026-09-29, on the author's Mac:
   T-bar sweep, the Midra's take and cut, a refused input, the wrong family), and in the app a
   take on each rolled the right Mitti as it began.
 
+- **Real QLab 5.5.10 (2026-10-09)**, with Wait cues in a scratch workspace
+  (`tools/qlab-check.mjs`): joining with the passcode and by name, and the errors for no
+  passcode, a wrong one and a workspace that isn't open; play → GO, pause, play → resume (not a
+  second GO), stop-and-rewind, a clip running out. Through the server with the manual switcher,
+  a take onto QLab's input GOed the cue, its end AUTOed back, and the clip display counted it
+  down. The details are in [docs/QLAB.md](docs/QLAB.md).
+
 **Not yet verified:**
+- a Video cue playing in QLab (only its type was read), a pre-wait, a clip inside a Group, a
+  QLab on another machine, or a show-sized QLab workspace;
 - two real Mittis at once, on any switcher, and two real Mittis on one emulated ATEM;
 - a real LiveCore or Midra with automitti. In particular: whether a LiveCore's T-bar sweep
   looks right at the default 1 s; whether a Midra's take is seen as it starts (automitti's own
@@ -264,11 +306,13 @@ drivers/
   switchers/       v160hd, midra, livecore, midra-classic, manual: each index.js + driver
                    code (+ sim.mjs; livecore's plays a Midra too)
   players/mitti/   OSC link and relay, feedback model, HyperDeck clip list, sim.mjs
+  players/qlab/    OSC over TCP (SLIP), the cue-stack model, sim.mjs
 web/               control page (home, a tab per Mitti, switcher & show; driver settings drawn
                    from each schema), clip display
-tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK)
+tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK),
+                   qlab-check.mjs (the QLab driver against a real QLab)
 launcher/          the tray app (the fleet's av-launcher shell, Tauri)
-docs/              DRIVERS.md, and MITTI.md, ATEM.md, V160HD.md: the protocol research
+docs/              DRIVERS.md, and MITTI.md, QLAB.md, ATEM.md, V160HD.md: the protocol research
 ```
 
 <!-- attributions:start -->
