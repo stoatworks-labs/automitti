@@ -2,12 +2,13 @@
 
 > **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
 > (Anthropic), directed and reviewed by a human author. It has run against a real Mitti
-> 2.8.18, a real QLab 5.5.10 and Blackmagic's own Switcher SDK, but the switchers only against
-> simulators — see
+> 2.8.18, a real QLab 5.5.10 (with Wait cues only) and Blackmagic's own Switcher SDK, but the
+> switchers only against simulators — see
 > [What has been verified](#what-has-been-verified) before relying on it for a show.
 >
-> **Preview.** v0.1.1 is a preview release: complete enough to try, not yet proven on a real
-> V-160HD or Pulse 4K.
+> **Preview.** v0.2.0 is a preview release: complete enough to try, not yet proven on a real
+> V-160HD, Pulse 4K, LiveCore or Midra, with two real Mittis at once, or with a QLab Video cue
+> actually playing.
 
 A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti doesn't
 know about, such as a **Roland V-160HD**, an **Analog Way Pulse 4K / Midra 4K**, an older
@@ -43,6 +44,7 @@ under 30 s and red under 10 s, and the ON AIR chip is the switcher's tally for M
 
 Not affiliated with or endorsed by imimot (Mitti), Figure 53 (QLab), Roland, Analog Way,
 Blackmagic Design or Vizrt (NDI). Their names are used only to say what this works with.
+NDI® is a registered trademark of Vizrt NDI AB ([ndi.video](https://ndi.video)).
 
 <!-- downloads:start -->
 
@@ -167,7 +169,8 @@ Between feedback packets the clock runs locally, so it counts smoothly.
 ## Running it
 
 - **Tray app:** download it from Releases, press **Start server**, and open the page.
-  Settings are stored in `~/Library/Application Support/automitti/config.json`.
+  Settings are stored in `~/Library/Application Support/automitti/config.json`. The
+  [user guide](docs/USER-GUIDE.md) walks through setting it up for a show.
 - **From a checkout:** `npm install && npm start`, then open <http://localhost:8710/>.
 - **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck),
   `npm run sim:qlab` a QLab workspace (passcode 1234; `-- --port 53010` when QLab itself is
@@ -312,7 +315,8 @@ web/               control page (home, a tab per Mitti, switcher & show; driver 
 tools/             sdk-check.sh (the emulated ATEM against Blackmagic's own SDK),
                    qlab-check.mjs (the QLab driver against a real QLab)
 launcher/          the tray app (the fleet's av-launcher shell, Tauri)
-docs/              DRIVERS.md, and MITTI.md, QLAB.md, ATEM.md, V160HD.md: the protocol research
+docs/              USER-GUIDE.md; DRIVERS.md; and MITTI.md, QLAB.md, ATEM.md, V160HD.md: the
+                   protocol research
 ```
 
 <!-- attributions:start -->
