@@ -1,19 +1,19 @@
 # automitti (preview)
 
 > **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
-> (Anthropic), directed and reviewed by a human author. It has run against a real Mitti
+> (Anthropic), directed and reviewed by a human author. It's run against a real Mitti
 > 2.8.18, a real QLab 5.5.10 (with Wait cues only) and Blackmagic's own Switcher SDK, but the
-> switchers only against simulators — see
-> [What has been verified](#what-has-been-verified) before relying on it for a show.
+> switchers only against simulators, so read
+> [What has been verified](#what-has-been-verified) before you rely on it for a show.
 >
-> **Preview.** v0.2.0 is a preview release: complete enough to try, not yet proven on a real
-> V-160HD, Pulse 4K, LiveCore or Midra, with two real Mittis at once, or with a QLab Video cue
-> actually playing.
+> **Preview.** v0.2.0 is a preview release: complete enough to try, but not yet proven on a
+> real V-160HD, Pulse 4K, LiveCore or Midra, with two real Mittis at once, or with a QLab Video
+> cue actually playing.
 
-A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti doesn't
-know about, such as a **Roland V-160HD**, an **Analog Way Pulse 4K / Midra 4K**, an older
+A menu-bar app that puts [Mitti](https://imimot.com/mitti/) on switchers Mitti has never
+heard of, such as a **Roland V-160HD**, an **Analog Way Pulse 4K / Midra 4K**, an older
 **Analog Way Midra** (Pulse², Eikos², QuickVu…) or a **LiveCore** (Ascender, NeXtage,
-SmartMatriX Ultra). They drive Mitti the way an ATEM does. automitti also:
+SmartMatriX Ultra), and lets them drive Mitti the way an ATEM does. It also:
 
 - runs **several Mittis at once** on the one switcher — main and backup, or one per
   content type — each on its own input, with a tab of its own and a home page that shows
@@ -69,7 +69,7 @@ macOS builds are signed and notarised by Apple, so they open normally — no Gat
 
 ## Four ways to put Mitti on the switcher
 
-Pick **one** per Mitti. They are alternatives, and running two at once makes both act on
+Pick **one** per Mitti. They're alternatives, and running two at once makes both act on
 every take. With several Mittis, each can use a different one.
 
 | Mode | Mitti is set to | What automitti does |
@@ -92,24 +92,25 @@ count**, so a clip rolls as the mix starts, not after it.
 Each Mitti is a **device** in automitti. Add one with **+ Add Mitti** in the tab bar; each
 gets a tab of its own. All of them share the one switcher and the one emulated ATEM.
 
-- **Home** shows every Mitti together: its clip, countdown, next clip, tally, which input it
-  is on, and which of the four modes is driving it. Below are the switcher and its inputs,
+- **Home** shows every Mitti together: its clip, countdown, next clip, tally, which input it's
+  on, and which of the four modes is driving it. Below are the switcher and its inputs,
   each input marked with the Mitti it carries.
 - **A Mitti's tab** has its address, its switcher input, where its feedback is relayed, its
   NDI tally, its rules and its clip display link. Remove a Mitti from the foot of its tab.
 - **Switcher & show** has the switcher, the emulated ATEM, the network and the clip display
   colours, which every Mitti shares.
 
-Each Mitti needs its **own feedback port**. A new one is given the next port after the
-highest in use (51010, 51011…), and appears in Mitti's *Feedback To* list as
-`automitti-51011`. Two Mittis set to the same port are flagged on both of their cards.
+Each Mitti needs its **own feedback port**. A new one gets the next port after the highest
+in use (51010, 51011…), and shows up in Mitti's *Feedback To* list as `automitti-51011`. Two
+Mittis set to the same port are flagged on both their cards.
 
-**Every Mitti can use the one emulated ATEM** at the same time, as several Mittis can share a
-real ATEM. In each Mitti, choose *automitti* under ATEM and pick the input that Mitti is on.
+**Every Mitti can use the one emulated ATEM** at the same time, just as several Mittis can
+share a real ATEM. In each Mitti, choose *automitti* under ATEM and pick the input that
+Mitti's on.
 
 **Over HTTP**, `POST /api/player` takes `"device"`: a Mitti's id (from its tab's address,
 `#/device/<id>`) or its name, in any case. Without it, the request goes to the first Mitti,
-as it did before. `/api/mitti` is the same.
+as it did before. `/api/mitti` works the same way.
 
 Settings from v0.1.x carry across as the first device, named after the old clip display title.
 
@@ -118,21 +119,21 @@ Settings from v0.1.x carry across as the first device, named after the old clip 
 A device's **Player** can be QLab instead of Mitti. QLab has no ATEM or NDI integration of its
 own, so automitti drives it with the **rules**: turn them on, and *Play* GOes the cue list (or
 resumes a clip that was paused), *Cue ends* takes the switcher off it, and *Taken off air* can
-pause or stop it. It is connected to over OSC on TCP 53000.
+pause or stop it. automitti talks to it over OSC on TCP 53000.
 
-- **The passcode.** QLab 5 gives every new workspace a 4-digit OSC passcode and gives
-  connections without one no access at all. Copy it from *Workspace Settings → Network → OSC
+- **The passcode.** QLab 5 gives every new workspace a 4-digit OSC passcode, and connections
+  without one get no access at all. Copy it from *Workspace Settings → Network → OSC
   Access* into the device's settings; it needs **Control** for the rules to work.
-- **What counts as a clip.** Only cues of the types in *Cue types that are clips* — Video, unless
-  you add others — are shown and followed. A light or audio cue between two videos is passed
-  over, and the clip display's *Next* is the next video.
+- **What counts as a clip.** Only cues of the types in *Cue types that are clips* (Video, unless
+  you add others) are shown and followed. A light or audio cue between two videos is skipped,
+  and the clip display's *Next* is the next video.
 - **Current and next.** The current clip is the one running or paused, or else the one the
   playhead stands by on, which the next GO plays. A clip that runs out stays current at 0 left
   for a moment, which is what lets *Cue ends* fire.
-- **Workspace and cue list** are the first one open and the current one unless you name them.
+- **Workspace and cue list** are the first one open and the current one, unless you name them.
 
 How QLab's cue stack is mapped onto a player, and what a real QLab does that its OSC
-dictionary doesn't say, is in [docs/QLAB.md](docs/QLAB.md).
+dictionary doesn't mention, is in [docs/QLAB.md](docs/QLAB.md).
 
 ## Switchers
 
@@ -146,7 +147,7 @@ dictionary doesn't say, is in [docs/QLAB.md](docs/QLAB.md).
 
 ## OSC feedback to several destinations
 
-Mitti sends feedback to exactly one address. Set it to automitti (it appears in Mitti's
+Mitti sends feedback to one address only. Set it to automitti (it shows up in Mitti's
 *Feedback To* list as `automitti-51010` over Bonjour). automitti re-sends **every packet,
 byte for byte**, to each destination you list: Companion's Mitti module on 51001, a Stream
 Deck, a second machine. Only packets from the configured Mitti are relayed. Each Mitti has
@@ -159,7 +160,7 @@ its own list.
 
 - current clip name, big remaining time, elapsed, TRT and a progress bar;
 - next clip name and **its** TRT, which Mitti's OSC feedback doesn't carry. automitti reads
-  clip durations from Mitti's HyperDeck emulation and remembers each cue's TRT once it has
+  clip durations from Mitti's HyperDeck emulation and remembers each cue's TRT once it's
   been current;
 - an on-air / preview chip from the switcher's tally, amber and red countdown thresholds, and
   `frames` in the query to show frames.
@@ -169,7 +170,7 @@ Between feedback packets the clock runs locally, so it counts smoothly.
 ## Running it
 
 - **Tray app:** download it from Releases, press **Start server**, and open the page.
-  Settings are stored in `~/Library/Application Support/automitti/config.json`. The
+  Settings live in `~/Library/Application Support/automitti/config.json`. The
   [user guide](docs/USER-GUIDE.md) walks through setting it up for a show.
 - **From a checkout:** `npm install && npm start`, then open <http://localhost:8710/>.
 - **Without Mitti or a switcher:** `npm run sim` is a Mitti (OSC + HyperDeck),
@@ -201,13 +202,13 @@ network, so only install ones you trust.
 ## Traps worth knowing
 
 - **Mitti connects to the first IPv4 address Bonjour gives it.** On a machine with ZeroTier
-  or Tailscale that is often the VPN. Set *Network → Announce on address* to the show
+  or Tailscale that's often the VPN. Set *Network → Announce on address* to the show
   network's address. If that address disappears (the Mac moves network), automitti falls back
   to announcing on every interface and says so, and re-announces whenever the Mac's addresses
   change.
 - **Mitti saves the feedback target it picks from its Bonjour list as a bare IP address.**
-  Choose *automitti-51010* in Mitti's *Feedback To* list and move the Mac to another network, and
-  Mitti goes on sending feedback to the old address, so automitti shows it offline. When Mitti
+  Pick *automitti-51010* in Mitti's *Feedback To* list, move the Mac to another network, and
+  Mitti carries on sending feedback to the old address, so automitti shows it offline. When Mitti
   and automitti are on the same Mac, set *Feedback To* to Custom, `127.0.0.1`, port `51010`;
   otherwise pick the entry again after a network change.
 - **The emulated ATEM keeps one identity.** Mitti remembers an ATEM by its unique id, which
@@ -218,7 +219,7 @@ network, so only install ones you trust.
   unsupported` (only `device info` gets through), so automitti sends LF. Other HyperDeck
   clients that send CRLF see nothing but errors from Mitti.
 - **Mitti sends time left as a negative timecode** (`-00:00:45:00`).
-- **ZeroTier owns TCP 9993**, which is the HyperDeck port. On a machine running ZeroTier,
+- **ZeroTier owns TCP 9993**, which also happens to be the HyperDeck port. On a machine running ZeroTier,
   Mitti's HyperDeck emulation can't start, and the page says the port "answered, but not as a
   HyperDeck". You lose the next clip's TRT until it has once been current; nothing else is
   affected.
@@ -229,16 +230,16 @@ network, so only install ones you trust.
 - **QLab answers nothing while no workspace is open**, not even `/version`. The device says
   so, and joins the workspace as soon as one opens.
 - **One wrong QLab passcode locks you out for a while**: QLab refuses even the right one for
-  some seconds. automitti tries once, then waits 30 s, rather than lengthen the lockout.
+  some seconds. automitti tries once, then waits 30 s, rather than make the lockout longer.
 - **QLab's UDP replies go to port 53001**, not back to the sender's port. automitti uses TCP,
   so it doesn't compete with Companion's QLab module for 53001.
 
 ## What has been verified
 
-On 2026-09-29, on the author's Mac:
+On 2026-09-29, on my Mac:
 
 - **Real Mitti 2.8.18:** OSC ping/pong and feedback; feedback relayed. Mitti **selected and
-  connected to the emulated ATEM** by itself (over Bonjour) and reconnected after the server
+  connected to the emulated ATEM** on its own (over Bonjour) and reconnected after the server
   restarted, including from the packaged tray app. **An AUTO on the (simulated) V-160HD onto
   Mitti's input rolled Mitti through the emulated ATEM** as the transition began. The clip
   list with durations came over Mitti's HyperDeck emulation, and the display showed the
@@ -256,15 +257,15 @@ On 2026-09-29, on the author's Mac:
   ATEM, an AUTO on the Midra onto Mitti's input rolled the clip half a second in, mid-transition,
   and at the end of the clip Mitti's own *Pause at End → AUTO to Preview* came back through the
   emulated ATEM as "preview 1, AUTO", and the Midra took input 1 back to program. The whole
-  loop, with no rules of automitti's involved.
+  loop, with none of automitti's rules involved.
 - **Test suite** (`npm test`): the OSC codec and relay, the V-160HD driver against its
   simulator (login, labels, pushed tally, CUT/AUTO, pre-3.3 firmware, wrong password), the
   rules end to end with both simulators, and the ATEM emulator against `atem-connection`.
 - **Several Mittis, against simulators (2026-10-08):** two Mitti simulators on one V-160HD
   simulator. A cut to each one's input rolled that Mitti and only that one, and the one taken
   off paused. A Mitti was added (on the next feedback port), renamed, given an input and
-  removed from the page, and its feedback port was released. The author's own v0.1.1 settings
-  file became the first device with its relay list, NDI tally, rules and ATEM id intact.
+  removed from the page, and its feedback port was released. My own v0.1.1 settings file
+  became the first device with its relay list, NDI tally, rules and ATEM id intact.
 
 - **LiveCore and Midra (2026-10-08), against simulators only:** the drivers are written from
   [openRCS](https://github.com/stoatworks-labs/openrcs), which established the protocol and its
