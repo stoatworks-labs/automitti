@@ -1,54 +1,38 @@
-# Signing & notarizing the LivePremier Plus desktop app (optional)
+# Signing & notarizing the automitti desktop app (optional)
 
-**You do not need any of this to use LivePremier Plus.** By default the `.dmg` is
-**unsigned** — macOS Gatekeeper just asks you to right-click the app → **Open**
-the first time, and it runs fine after that. The release workflow builds and
-ships that unsigned `.dmg` automatically.
+**Released builds are already signed and notarised.** I build each release on my own
+Mac with the repo's [`scripts/release.sh`](../scripts/release.sh), and the Developer ID
+key never leaves it, so there's no release workflow and no signing secret in this
+repository. A downloaded release opens with a normal double-click.
 
-This page is only relevant **if** you have a **paid Apple Developer Program**
-membership and want a signed + notarized build that opens with a normal
-double-click. Notarization is a paid-account feature — there's no free path — so
-if you don't have an account, ignore this file. When the secrets below are
-absent the [`release-desktop`](../.github/workflows/release-desktop.yml) workflow
-simply produces the unsigned `.dmg`; add them and it produces a signed one. You
-add them in the repo yourself — they are never entered or stored anywhere else.
+This page is only relevant **if** you build a copy yourself. Without a signing identity
+that copy is **unsigned**, and macOS Gatekeeper asks you to right-click the app →
+**Open** the first time. A signed + notarized build that opens with a normal
+double-click needs a paid Apple Developer Program membership. Notarization is a
+paid-account feature, and there's no free path.
 
 ## What you'd need
 
 A **paid Apple Developer Program** membership and a **Developer ID Application**
-certificate (the cert type for distributing apps *outside* the App Store).
+certificate (the cert type for distributing apps *outside* the App Store), plus an
+**app-specific password** for your Apple ID, made at
+[appleid.apple.com](https://appleid.apple.com) → Sign-In & Security → App-Specific
+Passwords. **Not** your real Apple ID password. Find your identity's full name with
+`security find-identity -v -p codesigning`.
 
-## Secrets to create
+## How a release builds
 
-Repo → **Settings → Secrets and variables → Actions → New repository secret**:
+[`scripts/release.sh`](../scripts/release.sh) at the repo root:
 
-| Secret | What it is / how to get it |
-|---|---|
-| `APPLE_CERTIFICATE` | Your *Developer ID Application* certificate exported from **Keychain Access** as a `.p12`, then base64-encoded: `base64 -i cert.p12 \| pbcopy`. Paste the result. |
-| `APPLE_CERTIFICATE_PASSWORD` | The password you set when exporting the `.p12`. |
-| `APPLE_SIGNING_IDENTITY` | The certificate's full name, e.g. `Developer ID Application: Your Name (TEAMID)`. Find it with `security find-identity -v -p codesigning`. |
-| `APPLE_ID` | Your Apple ID email (used for notarization). |
-| `APPLE_PASSWORD` | An **app-specific password** for that Apple ID — create one at [appleid.apple.com](https://appleid.apple.com) → Sign-In & Security → App-Specific Passwords. **Not** your real Apple ID password. |
-| `APPLE_TEAM_ID` | Your 10-character Team ID (Apple Developer account → Membership). |
+1. stages the universal app (`NODE_PLATFORM=darwin-universal scripts/prepare.sh`),
+2. **pre-signs the embedded Node binary and koffi's addons** (`scripts/sign-embedded.sh`)
+   with the hardened runtime + [`entitlements.plist`](src-tauri/entitlements.plist):
+   nested Mach-Os that must be signed for the bundle to notarize,
+3. runs `tauri build --target universal-apple-darwin`, which signs the `.app`,
+4. notarises and staples the `.app`, puts it in a `.dmg`, and notarises and staples
+   that too, as `dist/release/automitti-<version>-macos-universal.dmg`.
 
-> Handle the `.p12` and passwords yourself — export, base64, and paste them
-> straight into GitHub's secret fields. Don't commit them or share them here.
-
-## How it builds
-
-`release-macos.yml` (on a `v*` tag or manual run):
-
-1. builds + stages the embedded app (`scripts/prepare.sh`),
-2. imports `APPLE_CERTIFICATE` into a temporary keychain (only if present),
-3. **pre-signs the embedded Node binary** (`scripts/sign-embedded.sh`) with the
-   hardened runtime + [`entitlements.plist`](src-tauri/entitlements.plist) — a
-   nested Mach-O that must be signed for the bundle to notarize,
-4. runs `tauri build`, which signs the `.app`/`.dmg` and, when the notarization
-   secrets are present, submits it to Apple and staples the ticket,
-5. attaches the `.dmg` to the GitHub release.
-
-If the certificate secret is absent, steps 2–3 are skipped and it produces an
-unsigned `.dmg`.
+The `.dmg` then goes up to the GitHub release with `gh release create`.
 
 ## Building a signed `.dmg` locally
 
