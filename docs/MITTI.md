@@ -116,6 +116,20 @@ Commands handled: `play` (with speed, loop and single clip), `stop`, `goto` (cli
 **Shuttle/jog/reverse are unsupported** ("Mitti cannot play videos backwards").
 `HyperDeckState = 1` in prefs, so it's on.
 
+What the real 2.8.19 did when I asked it by hand on 2026-10-20 (read-only, LF-ended, empty
+playlist):
+
+- A bare **`slot info` gets no reply at all**: no `202`, no `103`, not in 8 s. Neither does
+  `slot info: slot id: 0`. `slot info: slot id: 1` answers `202` at once (`status: mounted`,
+  `volume name: MITTI_DISK`, `recording time: 0`, `blocked: false`), and `slot id: 2` answers
+  `status: empty`. Blackmagic's protocol says the bare form means the selected slot, so this
+  is Mitti's gap. Anything that waits for each reply before sending the next command stalls
+  for its whole timeout on a bare `slot info`.
+- `transport info` says `slot id: 1` and `clip id: none`. `device info` says `slot count: 1`
+  and gives no `software version`. The greeting says `model: mitti`, lower case.
+- The same day, openRCS's session saw a CR LF-ended command still get `103 unsupported` on
+  2.8.19, as on 2.8.18.
+
 ---
 
 ## 4. Constraints that shape the app design

@@ -258,6 +258,12 @@ On 2026-09-29, on my Mac:
   and at the end of the clip Mitti's own *Pause at End → AUTO to Preview* came back through the
   emulated ATEM as "preview 1, AUTO", and the Midra took input 1 back to program. The whole
   loop, with none of automitti's rules involved.
+- **Real Mitti 2.8.19's HyperDeck slot (2026-10-20), read-only, with an empty playlist:** Mitti
+  never answers a bare `slot info`, so the HyperDeck link used to wait 3 s on every connect
+  before its first transport state, and never got the disk. The link now asks
+  `slot info: slot id: 1` after the transport, and against the real Mitti it had transport and
+  slot in 4 ms. The old link got its first transport at 3003 ms and never got the slot.
+  [docs/MITTI.md](docs/MITTI.md) has what Mitti answered. Nothing was played.
 - **Test suite** (`npm test`): the OSC codec and relay, the V-160HD driver against its
   simulator (login, labels, pushed tally, CUT/AUTO, pre-3.3 firmware, wrong password), the
   rules end to end with both simulators, and the ATEM emulator against `atem-connection`.

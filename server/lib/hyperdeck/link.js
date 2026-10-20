@@ -1,7 +1,8 @@
 /*
  * Copied from LivePremier Plus (plugins/hyperdeck/link.js, 9703ce3) and
  * changed to wait for the deck's greeting before calling it connected, and to
- * end commands with LF (Mitti refuses CRLF).
+ * end commands with LF (Mitti refuses CRLF). Since then, as LivePremier Plus
+ * 34045e0: `slot info` asked by number, because Mitti never answers it bare.
  *
  * One deck's connection: HyperDeck protocol over TCP 9993, kept up.
  *
@@ -37,7 +38,7 @@ import { EventEmitter } from 'node:events';
 import net from 'node:net';
 import {
   HYPERDECK_PORT, ReplyParser, isAsync, isError, readTransport, readClips, readDevice, readSlot,
-  clipPosition, COMMANDS, RECORD_COMMANDS, profileOf,
+  clipPosition, slotQuery, COMMANDS, RECORD_COMMANDS, profileOf,
 } from './protocol.js';
 
 const REPLY_TIMEOUT_MS = 3000;
@@ -167,8 +168,10 @@ export class DeckLink extends EventEmitter {
     if (this.profile.notify) void this.request('notify: transport: true slot: true');
     void this.request('device info');
     void this.refreshClips();
-    void this.request('slot info');
-    void this.request('transport info');
+    /* The transport first: its `slot id` is the slot to ask about. Asked
+       bare, Mitti never answers, and everything queued behind it waited out
+       REPLY_TIMEOUT_MS on every connect. */
+    void this.request('transport info').then(() => this.request(slotQuery(this.transport.slot)));
     this.schedulePoll();
   }
 

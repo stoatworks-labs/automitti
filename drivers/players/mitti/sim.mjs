@@ -9,7 +9,9 @@
  * What automitti's tests run against and what to point it at without Mitti.
  * The vocabulary is the one read out of Mitti 2.8.18's binary (docs/MITTI.md);
  * the timing (feedback every 100 ms while playing) is a guess, not a
- * measurement. It is an emulation, not proof that Mitti agrees.
+ * measurement. It is an emulation, not proof that Mitti agrees. Two HyperDeck
+ * behaviours are copied from a real Mitti: CR-ended commands refused (2.8.18),
+ * and no reply at all to a bare `slot info` (2.8.19).
  *
  * Loopback by default: a fake Mitti on the show network is one a real
  * Companion could find.
@@ -237,7 +239,8 @@ export async function startMittiSim(options = {}) {
              (device info excepted). */
           if (raw.endsWith('\r') && !/^device info/i.test(raw)) { socket.write('103 unsupported\r\n'); continue; }
           const line = raw.trim();
-          if (line) socket.write(answer(line, client));
+          const reply = line ? answer(line, client) : null;
+          if (reply) socket.write(reply);
         }
       });
       socket.on('close', () => clients.delete(client));
@@ -257,7 +260,14 @@ export async function startMittiSim(options = {}) {
       case 'ping': return '200 ok\r\n';
       case 'device info': return '204 device info:\r\nprotocol version:1.11\r\nmodel: Mitti\r\nslot count: 1\r\n\r\n';
       case 'transport info': return transportBlock(208);
-      case 'slot info': return '202 slot info:\r\nslot id: 1\r\nstatus: mounted\r\nvideo format: 1080p25\r\n\r\n';
+      case 'slot info': {
+        /* As Mitti 2.8.19 did on 2026-10-20: no reply at all, not even an
+           error, to a bare `slot info` or to slot 0. Its one slot is 1; it
+           calls any other empty. */
+        const id = Number(/slot id:\s*(\d+)/i.exec(rest)?.[1] ?? 0);
+        if (id < 1) return null;
+        return `202 slot info:\r\nslot id: ${id}\r\nstatus: ${id === 1 ? 'mounted' : 'empty'}\r\nvolume name: MITTI_DISK\r\nrecording time: 0\r\nvideo format: ${FORMAT}\r\nblocked: false\r\n\r\n`;
+      }
       case 'clips count': return `214 clips count:\r\nclip count: ${state.cues.length}\r\n\r\n`;
       case 'clips get': return ['205 clips info:', `clip count: ${state.cues.length}`,
         ...state.cues.map((c, i) => `${i + 1}: ${c.name} ${tc(startOf(i))} ${tc(c.seconds)}`), '', ''].join('\r\n');
