@@ -6,7 +6,7 @@
 > switchers only against simulators, so read
 > [What has been verified](#what-has-been-verified) before you rely on it for a show.
 >
-> **Preview.** v0.2.0 is a preview release: complete enough to try, but not yet proven on a
+> **Preview.** v0.2.1 is a preview release: complete enough to try, but not yet proven on a
 > real V-160HD, Pulse 4K, LiveCore or Midra, with two real Mittis at once, or with a QLab Video
 > cue actually playing.
 

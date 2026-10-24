@@ -10,7 +10,7 @@ automitti gives it that same behaviour on the switchers above. It also sends Mit
 feedback stream to as many places as you list, and serves a full-screen clip clock to any
 browser.
 
-> **Released at v0.2.0, as a preview: try it with your own kit before a show depends on it.**
+> **Released at v0.2.1, as a preview: try it with your own kit before a show depends on it.**
 > This is an AI-assisted codebase, directed and reviewed by a human author.
 >
 > **Run against real equipment:** Mitti 2.8.18 and 2.8.19 (the emulated ATEM, Mitti's own

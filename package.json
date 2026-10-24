@@ -1,6 +1,6 @@
 {
   "name": "automitti",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "stage": "preview",
   "private": true,
   "type": "module",
