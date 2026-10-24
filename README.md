@@ -50,14 +50,14 @@ NDI® is a registered trademark of Vizrt NDI AB ([ndi.video](https://ndi.video))
 
 ## Download
 
-**[v0.2.0](https://github.com/stoatworks-labs/automitti/releases/tag/v0.2.0)** — prebuilt for macOS. Pick your platform:
+**[v0.2.1](https://github.com/stoatworks-labs/automitti/releases/tag/v0.2.1)** — prebuilt for macOS. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`automitti-0.2.0-macos-universal.dmg`](https://github.com/stoatworks-labs/automitti/releases/download/v0.2.0/automitti-0.2.0-macos-universal.dmg) | 83 MB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`automitti-0.2.1-macos-universal.dmg`](https://github.com/stoatworks-labs/automitti/releases/download/v0.2.1/automitti-0.2.1-macos-universal.dmg) | 83 MB |
 
 </details>
 
