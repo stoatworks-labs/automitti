@@ -25,6 +25,8 @@ SmartMatriX Ultra), and lets them drive Mitti the way an ATEM does. It also:
   QLab's input GOes its cue list, the end of a video cue can take it off again, and the clip
   display counts the running video down.
 
+The [project page](https://stoatworks-labs.com/software/automitti/) has the downloads and the [user guide](https://stoatworks-labs.com/software/automitti/guide/).
+
 ![The clip display: current clip, big countdown, elapsed, remaining, TRT, and the next clip with its TRT](docs/hero.png)
 
 *The clip display at `/display`, fed by the bundled Mitti simulator. The countdown goes amber
